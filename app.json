@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "vamsi-vault",
+    "slug": "vamsi-vault",
+    "scheme": "vamsivault",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anu2005.vamsivault"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8d051adb-3cb8-4305-ada0-0fe2e00fbd00"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
