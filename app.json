@@ -4,24 +4,21 @@
     "slug": "vamsi-vault",
     "scheme": "vamsivault",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
+    "icon": "./assets/images/logo.png",
     "android": {
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anu2005.vamsivault"
+      "package": "com.anu2005.vamsivault",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/logo.png"
     },
     "extra": {
       "eas": {
         "projectId": "8d051adb-3cb8-4305-ada0-0fe2e00fbd00"
       }
-    },
-    "plugins": [
-      "expo-font"
-    ]
+    }
   }
 }

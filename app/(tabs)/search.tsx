@@ -75,32 +75,43 @@ export default function SearchScreen() {
     }
   };
 
+  const openPassword = (id: string) => {
+    router.push({
+      pathname: "/password/details",
+      params: {
+        id,
+      },
+    });
+  };
+
   const renderItem = ({ item }: any) => (
     <TouchableOpacity
-      style={styles.card}
-      onPress={() =>
-        router.push({
-          pathname: "/password/details",
-          params: {
-            id: item.id,
-          },
-        })
-      }
+      style={styles.passwordCard}
+      onPress={() => openPassword(item.id)}
+      activeOpacity={0.8}
     >
-      <View>
+      <View style={styles.cardLeft}>
 
-        <Text style={styles.appName}>
-          {item.app_name}
-        </Text>
+        <View style={styles.appIcon}>
+          <Text style={styles.appIconText}>
+            🔐
+          </Text>
+        </View>
 
-        <Text style={styles.username}>
-          {item.username}
-        </Text>
+        <View style={styles.textContainer}>
+          <Text style={styles.appName}>
+            {item.app_name}
+          </Text>
+
+          <Text style={styles.username}>
+            {item.username}
+          </Text>
+        </View>
 
       </View>
 
       <Text style={styles.arrow}>
-        ➜
+        →
       </Text>
 
     </TouchableOpacity>
@@ -108,9 +119,7 @@ export default function SearchScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={styles.loadingContainer}
-      >
+      <SafeAreaView style={styles.loadingContainer}>
         <StatusBar style="dark" />
 
         <ActivityIndicator
@@ -121,7 +130,6 @@ export default function SearchScreen() {
         <Text style={styles.loadingText}>
           Loading Passwords...
         </Text>
-
       </SafeAreaView>
     );
   }
@@ -130,32 +138,45 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <View style={styles.header}>
+      {/* Search Bar */}
 
-        <TouchableOpacity
-          onPress={() => router.back()}
-        >
-          <Text style={styles.back}>
-            ← Back
-          </Text>
-        </TouchableOpacity>
+      <View style={styles.searchContainer}>
 
-        <Text style={styles.title}>
-          🔍 Search Passwords
+        <Text style={styles.searchIcon}>
+          🔍
         </Text>
-
-      </View>
-            <View style={styles.searchContainer}>
 
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by App Name..."
+          placeholder="Search passwords..."
+          placeholderTextColor="#9CA3AF"
           value={search}
           onChangeText={setSearch}
           autoCapitalize="none"
+          autoCorrect={false}
         />
 
+        {search.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearch("")}
+          >
+            <Text style={styles.clearButton}>
+              ✕
+            </Text>
+          </TouchableOpacity>
+        )}
+
       </View>
+
+      {/* Suggested Passwords */}
+
+      <Text style={styles.sectionTitle}>
+        {search.trim() === ""
+          ? "SUGGESTED PASSWORDS"
+          : "SEARCH RESULTS"}
+      </Text>
+
+      {/* Password List */}
 
       {filteredPasswords.length === 0 ? (
 
@@ -170,7 +191,7 @@ export default function SearchScreen() {
           </Text>
 
           <Text style={styles.emptySubtitle}>
-            Try another search or add a new password.
+            Try searching with another app name.
           </Text>
 
         </View>
@@ -179,12 +200,12 @@ export default function SearchScreen() {
 
         <FlatList
           data={filteredPasswords}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) =>
+            item.id.toString()
+          }
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: 30,
-          }}
+          contentContainerStyle={styles.listContent}
         />
 
       )}
@@ -194,11 +215,12 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: "#F5F7FB",
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 50,
   },
 
   loadingContainer: {
@@ -211,94 +233,148 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 16,
-    color: "#666",
+    color: "#6B7280",
   },
 
-  header: {
-    marginBottom: 20,
-  },
-
-  back: {
-    color: "#2563EB",
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 15,
-  },
-
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#2563EB",
-  },
+  /* Search Bar */
 
   searchContainer: {
-    marginBottom: 20,
-  },
-
-  searchInput: {
+    height: 58,
     backgroundColor: "#FFFFFF",
-    height: 55,
-    borderRadius: 14,
-    paddingHorizontal: 18,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    fontSize: 16,
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 15,
+    borderRadius: 17,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E1E7ED",
+    marginBottom: 25,
+
     elevation: 2,
   },
 
-  appName: {
+  searchIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+
+  searchInput: {
+    flex: 1,
+    height: "100%",
+    fontSize: 16,
+    color: "#123B63",
+  },
+
+  clearButton: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#222",
+    color: "#9CA3AF",
+    padding: 5,
+  },
+
+  /* Section Title */
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#123B63",
+    letterSpacing: 0.8,
+    marginBottom: 14,
+  },
+
+  /* Password List */
+
+  listContent: {
+    paddingBottom: 30,
+  },
+
+  passwordCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 13,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+
+    elevation: 2,
+
+    shadowColor: "#123B63",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+
+  cardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  appIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    backgroundColor: "#EAF2F8",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 13,
+  },
+
+  appIconText: {
+    fontSize: 23,
+  },
+
+  textContainer: {
+    flex: 1,
+  },
+
+  appName: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#123B63",
   },
 
   username: {
     marginTop: 5,
-    fontSize: 14,
-    color: "#666",
+    fontSize: 13,
+    color: "#7A8491",
   },
 
   arrow: {
-    fontSize: 22,
-    color: "#2563EB",
+    fontSize: 25,
+    color: "#D89B24",
     fontWeight: "bold",
+    marginLeft: 10,
   },
+
+  /* Empty State */
 
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 80,
+    paddingHorizontal: 30,
   },
 
   emptyIcon: {
-    fontSize: 60,
-    marginBottom: 20,
+    fontSize: 58,
+    marginBottom: 18,
   },
 
   emptyTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#123B63",
+    marginBottom: 8,
   },
 
   emptySubtitle: {
-    fontSize: 16,
-    color: "#777",
+    fontSize: 15,
+    color: "#7A8491",
     textAlign: "center",
-    paddingHorizontal: 30,
-    lineHeight: 24,
+    lineHeight: 23,
   },
-});
 
+});

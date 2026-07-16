@@ -18,55 +18,38 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   Ionicons,
   MaterialCommunityIcons,
-  MaterialIcons,
 } from "@expo/vector-icons";
 
 import { supabase } from "../../services/supabase";
 
 export default function AddPasswordScreen() {
   const [appName, setAppName] = useState("");
-  const [username, setUsername] =useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [website, setWebsite] = useState("");
 
-  const [category, setCategory] =
-    useState("Social");
-
-  const [hidePassword, setHidePassword] =
-    useState(true);
-
-  const [loading, setLoading] =
-    useState(false);
+  const [category, setCategory] = useState("Social");
+  const [hidePassword, setHidePassword] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const savePassword = async () => {
-
     if (!appName.trim()) {
-      Alert.alert(
-        "Validation",
-        "Please enter App Name."
-      );
+      Alert.alert("Validation", "Please enter App Name.");
       return;
     }
 
     if (!username.trim()) {
-      Alert.alert(
-        "Validation",
-        "Please enter Username."
-      );
+      Alert.alert("Validation", "Please enter Username.");
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert(
-        "Validation",
-        "Please enter Password."
-      );
+      Alert.alert("Validation", "Please enter Password.");
       return;
     }
 
     try {
-
       setLoading(true);
 
       const {
@@ -74,16 +57,13 @@ export default function AddPasswordScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-
         Alert.alert(
           "Session Expired",
           "Please login again."
         );
 
         setLoading(false);
-
         router.replace("/(auth)/login");
-
         return;
       }
 
@@ -104,12 +84,7 @@ export default function AddPasswordScreen() {
       setLoading(false);
 
       if (error) {
-
-        Alert.alert(
-          "Error",
-          error.message
-        );
-
+        Alert.alert("Error", error.message);
         return;
       }
 
@@ -128,22 +103,17 @@ export default function AddPasswordScreen() {
       router.replace("/(tabs)/dashboard");
 
     } catch (error) {
-
       setLoading(false);
 
       Alert.alert(
         "Error",
         "Something went wrong."
       );
-
     }
-
   };
 
   return (
-
     <SafeAreaView style={styles.container}>
-
       <StatusBar style="dark" />
 
       <ScrollView
@@ -151,49 +121,20 @@ export default function AddPasswordScreen() {
         contentContainerStyle={styles.scroll}
       >
 
-        <LinearGradient
-          colors={["#5B5FEF", "#7C4DFF"]}
-          style={styles.header}
-        >
+        {/* MAIN HEADING */}
+        <Text style={styles.mainTitle}>
+          ADD PASSWORD
+        </Text>
 
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color="#FFFFFF"
-            />
-          </TouchableOpacity>
-
-          <MaterialCommunityIcons
-            name="shield-lock"
-            size={60}
-            color="#FFFFFF"
-          />
-
-          <Text style={styles.title}>
-            Add Password
-          </Text>
-
-          <Text style={styles.subtitle}>
-            Securely save your credentials
-          </Text>
-
-        </LinearGradient>
-
-        {/* App Name */}
-
+        {/* APP / WEBSITE */}
         <Text style={styles.label}>
-          App / Website
+          App or Website
         </Text>
 
         <View style={styles.inputCard}>
-
           <MaterialCommunityIcons
             name="web"
-            size={22}
+            size={23}
             color="#6366F1"
           />
 
@@ -204,18 +145,17 @@ export default function AddPasswordScreen() {
             onChangeText={setAppName}
             placeholderTextColor="#9CA3AF"
           />
+        </View>
 
-        </View>        {/* Username */}
-
+        {/* USERNAME */}
         <Text style={styles.label}>
           Username
         </Text>
 
         <View style={styles.inputCard}>
-
           <Ionicons
             name="person-outline"
-            size={22}
+            size={23}
             color="#6366F1"
           />
 
@@ -226,20 +166,17 @@ export default function AddPasswordScreen() {
             onChangeText={setUsername}
             placeholderTextColor="#9CA3AF"
           />
-
         </View>
 
-        {/* Email */}
-
+        {/* EMAIL */}
         <Text style={styles.label}>
-          Email (Optional)
+          Email
         </Text>
 
         <View style={styles.inputCard}>
-
           <MaterialCommunityIcons
             name="email-outline"
-            size={22}
+            size={23}
             color="#6366F1"
           />
 
@@ -252,20 +189,17 @@ export default function AddPasswordScreen() {
             autoCapitalize="none"
             placeholderTextColor="#9CA3AF"
           />
-
         </View>
 
-        {/* Password */}
-
+        {/* PASSWORD */}
         <Text style={styles.label}>
           Password
         </Text>
 
         <View style={styles.inputCard}>
-
           <Ionicons
             name="lock-closed-outline"
-            size={22}
+            size={23}
             color="#6366F1"
           />
 
@@ -283,7 +217,6 @@ export default function AddPasswordScreen() {
               setHidePassword(!hidePassword)
             }
           >
-
             <Ionicons
               name={
                 hidePassword
@@ -293,22 +226,54 @@ export default function AddPasswordScreen() {
               size={24}
               color="#6366F1"
             />
-
           </TouchableOpacity>
-
         </View>
 
-        {/* Website */}
+        {/* CATEGORY */}
+        <Text style={styles.categoryTitle}>
+          CATEGORY
+        </Text>
 
+        <View style={styles.categoryContainer}>
+          {[
+            "Social",
+            "Email",
+            "Banking",
+            "Shopping",
+            "Work",
+            "Others",
+          ].map((item) => (
+            <TouchableOpacity
+              key={item}
+              style={[
+                styles.categoryChip,
+                category === item &&
+                  styles.selectedChip,
+              ]}
+              onPress={() => setCategory(item)}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  category === item &&
+                    styles.selectedText,
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* WEBSITE */}
         <Text style={styles.label}>
           Website URL (Optional)
         </Text>
 
         <View style={styles.inputCard}>
-
           <MaterialCommunityIcons
             name="link-variant"
-            size={22}
+            size={23}
             color="#6366F1"
           />
 
@@ -320,168 +285,89 @@ export default function AddPasswordScreen() {
             autoCapitalize="none"
             placeholderTextColor="#9CA3AF"
           />
-
         </View>
 
-        {/* Category */}
-
-        <Text style={styles.label}>
-          Category
-        </Text>
-
-        <View style={styles.categoryContainer}>
-
-          {[
-            "Social",
-            "Email",
-            "Development",
-            "Banking",
-            "Shopping",
-            "Education",
-            "Entertainment",
-            "Others",
-          ].map((item) => (
-
-            <TouchableOpacity
-              key={item}
-              style={[
-                styles.categoryChip,
-                category === item &&
-                  styles.selectedChip,
-              ]}
-              onPress={() =>
-                setCategory(item)
-              }
-            >
-
-              <Text
-                style={[
-                  styles.categoryText,
-                  category === item &&
-                    styles.selectedText,
-                ]}
-              >
-                {item}
-              </Text>
-
-            </TouchableOpacity>
-
-          ))}
-
-        </View>
-                {/* Save Button */}
-
+        {/* SAVE BUTTON */}
         <TouchableOpacity
           style={styles.saveButton}
           onPress={savePassword}
           disabled={loading}
           activeOpacity={0.9}
         >
-
           <LinearGradient
             colors={["#5B5FEF", "#7C4DFF"]}
             style={styles.gradientButton}
           >
-
             {loading ? (
-
-              <ActivityIndicator
-                color="#FFFFFF"
-              />
-
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-
               <>
                 <Ionicons
-                  name="shield-checkmark"
-                  size={22}
+                  name="checkmark-circle"
+                  size={23}
                   color="#FFFFFF"
                 />
 
                 <Text style={styles.saveButtonText}>
-                  Save Password
+                  Save to Vault
                 </Text>
               </>
-
             )}
-
           </LinearGradient>
-
         </TouchableOpacity>
 
       </ScrollView>
-
     </SafeAreaView>
-
   );
-
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: "#F8FAFF",
-     paddingTop: 30,
+    paddingTop: 30,
   },
 
   scroll: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 50,
   },
 
-  header: {
-    height: 210,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-
-  backButton: {
-    position: "absolute",
-    left: 18,
-    top: 18,
-  },
-
-  title: {
-    color: "#FFFFFF",
-    fontSize: 30,
-    fontWeight: "700",
-    marginTop: 15,
-  },
-
-  subtitle: {
-    color: "#E5E7FF",
-    fontSize: 15,
-    marginTop: 8,
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#1F2937",
+    textAlign: "center",
+    marginBottom: 25,
+    letterSpacing: 1,
   },
 
   label: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "600",
     color: "#374151",
-    marginBottom: 10,
     marginTop: 16,
+    marginBottom: 8,
   },
 
   inputCard: {
+    height: 62,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    height: 62,
+    borderRadius: 16,
+    paddingHorizontal: 16,
 
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 5,
+      height: 4,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
 
-    elevation: 5,
+    elevation: 3,
   },
 
   input: {
@@ -491,37 +377,42 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#374151",
+    marginTop: 28,
+    marginBottom: 12,
+    letterSpacing: 1,
+  },
+
   categoryContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginTop: 10,
   },
 
   categoryChip: {
-    width: "48%",
-    height: 52,
-    borderRadius: 15,
+    width: "31%",
+    height: 45,
+    borderRadius: 22,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
-
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
 
   selectedChip: {
-    backgroundColor: "#5B5FEF",
+    backgroundColor: "#6366F1",
+    borderColor: "#6366F1",
   },
 
   categoryText: {
-    color: "#374151",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600",
+    color: "#4B5563",
   },
 
   selectedText: {
@@ -530,8 +421,8 @@ const styles = StyleSheet.create({
 
   saveButton: {
     marginTop: 28,
-    marginBottom: 40,
-    borderRadius: 20,
+    marginBottom: 30,
+    borderRadius: 18,
     overflow: "hidden",
   },
 
@@ -544,9 +435,8 @@ const styles = StyleSheet.create({
 
   saveButtonText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
-    marginLeft: 10,
+    marginLeft: 9,
   },
-
 });

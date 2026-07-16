@@ -8,6 +8,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -22,12 +25,18 @@ export default function LoginScreen() {
 
   const login = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email.");
+      Alert.alert(
+        "Email Required",
+        "Please enter your email address."
+      );
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert("Error", "Please enter your password.");
+      Alert.alert(
+        "Password Required",
+        "Please enter your password."
+      );
       return;
     }
 
@@ -67,12 +76,13 @@ export default function LoginScreen() {
       );
 
       router.replace("/(tabs)/dashboard");
-    } catch (err) {
+
+    } catch (error) {
       setLoading(false);
 
       Alert.alert(
         "Error",
-        "Something went wrong."
+        "Something went wrong. Please try again."
       );
     }
   };
@@ -81,178 +91,424 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <TouchableOpacity
-        onPress={() => router.back()}
-      >
-        <Text style={styles.back}>
-          ← Back
-        </Text>
-      </TouchableOpacity>
-
-      <View style={styles.header}>
-        <Text style={styles.icon}>
-          🔐
-        </Text>
-
-        <Text style={styles.title}>
-          Welcome Back
-        </Text>
-
-        <Text style={styles.subtitle}>
-          Login to your account
-        </Text>
-      </View>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email Address"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry={hidePassword}
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      <TouchableOpacity
-        onPress={() =>
-          setHidePassword(!hidePassword)
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : undefined
         }
       >
-        <Text style={styles.showPassword}>
-          {hidePassword
-            ? "Show Password"
-            : "Hide Password"}
-        </Text>
-      </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
 
-      <TouchableOpacity
-        onPress={() =>
-          router.push("/(auth)/forgot-password")
-        }
-      >
-        <Text style={styles.forgot}>
-          Forgot Password?
-        </Text>
-      </TouchableOpacity>
+          {/* Header */}
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={login}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.buttonText}>
-            Login
-          </Text>
-        )}
-      </TouchableOpacity>
+          <View style={styles.header}>
 
-      <TouchableOpacity
-        onPress={() =>
-          router.replace("/(auth)/register")
-        }
-      >        <Text style={styles.register}>
-          Don't have an account? Register
-        </Text>
-      </TouchableOpacity>
+            <Text style={styles.title}>
+              Welcome{" "}
+              <Text style={styles.titleAccent}>
+                Back
+              </Text>
+            </Text>
 
+            <Text style={styles.subtitle}>
+              Sign in to your Vamsi Vault
+            </Text>
+
+            <Text style={styles.subtitle}>
+              to access your secure passwords
+            </Text>
+
+          </View>
+
+          {/* Login Form */}
+
+          <View style={styles.form}>
+
+            {/* Email */}
+
+            <View style={styles.inputGroup}>
+
+              <Text style={styles.label}>
+                Email Address
+              </Text>
+
+              <View style={styles.inputWrapper}>
+
+                <Text style={styles.inputIcon}>
+                  ✉️
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={email}
+                  onChangeText={setEmail}
+                />
+
+              </View>
+
+            </View>
+
+            {/* Password */}
+
+            <View style={styles.inputGroup}>
+
+              <Text style={styles.label}>
+                Password
+              </Text>
+
+              <View style={styles.inputWrapper}>
+
+                <Text style={styles.inputIcon}>
+                  🔑
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry={hidePassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() =>
+                    setHidePassword(!hidePassword)
+                  }
+                >
+                  <Text style={styles.eyeIcon}>
+                    {hidePassword ? "🙈" : "👁️"}
+                  </Text>
+                </TouchableOpacity>
+
+              </View>
+
+            </View>
+
+            {/* Forgot Password */}
+
+            <TouchableOpacity
+              style={styles.forgotButton}
+              onPress={() =>
+                router.push(
+                  "/(auth)/forgot-password"
+                )
+              }
+            >
+              <Text style={styles.forgotText}>
+                Forgot Password?
+              </Text>
+            </TouchableOpacity>
+
+            {/* Login Button */}
+
+            <TouchableOpacity
+              style={[
+                styles.loginButton,
+                loading &&
+                  styles.loginButtonDisabled,
+              ]}
+              onPress={login}
+              disabled={loading}
+            >
+
+              {loading ? (
+                <ActivityIndicator
+                  color="#FFFFFF"
+                  size="small"
+                />
+              ) : (
+                <Text style={styles.loginButtonText}>
+                  LOGIN SECURELY
+                </Text>
+              )}
+
+            </TouchableOpacity>
+
+          </View>
+
+          {/* OR Divider */}
+
+          <View style={styles.dividerContainer}>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.orText}>
+              OR
+            </Text>
+
+            <View style={styles.divider} />
+
+          </View>
+
+          {/* Create Account */}
+
+          <TouchableOpacity
+            style={styles.createAccountButton}
+            onPress={() =>
+              router.replace(
+                "/(auth)/register"
+              )
+            }
+          >
+            <Text style={styles.createAccountText}>
+              CREATE ACCOUNT
+            </Text>
+          </TouchableOpacity>
+
+          {/* Branding */}
+
+          <View style={styles.branding}>
+
+            <Text style={styles.brandName}>
+              Vamsi{" "}
+              <Text style={styles.brandAccent}>
+                Vault
+              </Text>
+            </Text>
+
+            <Text style={styles.brandSubtitle}>
+              Secure • Private • Protected
+            </Text>
+
+          </View>
+
+        </ScrollView>
+
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    padding: 24,
   },
 
-  back: {
-    marginTop: 10,
-    marginBottom: 20,
-    color: "#2563EB",
-    fontSize: 16,
-    fontWeight: "600",
+  keyboardView: {
+    flex: 1,
   },
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 28,
+    paddingTop: 60,
+    paddingBottom: 30,
+    justifyContent: "center",
+  },
+
+  /* Header */
 
   header: {
     alignItems: "center",
-    marginBottom: 35,
-  },
-
-  icon: {
-    fontSize: 70,
-    marginBottom: 10,
+    marginBottom: 38,
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#2563EB",
+    fontSize: 35,
+    fontWeight: "900",
+    color: "#123B63",
+    textAlign: "center",
+    letterSpacing: 0.3,
+  },
+
+  titleAccent: {
+    color: "#D89B24",
   },
 
   subtitle: {
-    marginTop: 8,
-    color: "#666",
+    marginTop: 10,
     fontSize: 16,
+    color: "#7A8491",
     textAlign: "center",
+    lineHeight: 23,
+  },
+
+  /* Form */
+
+  form: {
+    width: "100%",
+  },
+
+  inputGroup: {
+    marginBottom: 21,
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#123B63",
+    marginBottom: 9,
+    letterSpacing: 0.3,
+  },
+
+  inputWrapper: {
+    height: 62,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D7E0E8",
+    borderRadius: 17,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 16,
+
+    shadowColor: "#123B63",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+
+    elevation: 1,
+  },
+
+  inputIcon: {
+    fontSize: 20,
+    marginRight: 12,
   },
 
   input: {
-    height: 55,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    paddingHorizontal: 15,
+    flex: 1,
+    height: "100%",
     fontSize: 16,
-    backgroundColor: "#F9FAFB",
-    marginBottom: 15,
+    color: "#123B63",
+    fontWeight: "500",
   },
 
-  showPassword: {
-    alignSelf: "flex-end",
-    color: "#2563EB",
-    fontWeight: "600",
-    fontSize: 15,
-    marginBottom: 10,
-  },
-
-  forgot: {
-    alignSelf: "flex-end",
-    color: "#2563EB",
-    fontWeight: "600",
-    fontSize: 15,
-    marginBottom: 25,
-  },
-
-  button: {
-    height: 55,
-    backgroundColor: "#2563EB",
-    borderRadius: 12,
+  eyeButton: {
+    width: 42,
+    height: 42,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
+  eyeIcon: {
+    fontSize: 23,
   },
 
-  register: {
-    marginTop: 25,
-    textAlign: "center",
-    color: "#2563EB",
-    fontSize: 16,
-    fontWeight: "600",
+  /* Forgot Password */
+
+  forgotButton: {
+    alignSelf: "flex-end",
+    marginTop: -5,
+    marginBottom: 25,
   },
+
+  forgotText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#2563EB",
+  },
+
+  /* Login Button */
+
+  loginButton: {
+    height: 61,
+    backgroundColor: "#064B78",
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+
+    elevation: 6,
+
+    shadowColor: "#064B78",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 7,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
+
+  loginButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+  },
+
+  /* Divider */
+
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 27,
+  },
+
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+
+  orText: {
+    marginHorizontal: 15,
+    color: "#9CA3AF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  /* Create Account */
+
+  createAccountButton: {
+    height: 59,
+    borderWidth: 2,
+    borderColor: "#064B78",
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  createAccountText: {
+    color: "#064B78",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+
+  /* Branding */
+
+  branding: {
+    alignItems: "center",
+    marginTop: 50,
+  },
+
+  brandName: {
+    fontSize: 23,
+    fontWeight: "900",
+    color: "#123B63",
+    letterSpacing: 0.5,
+  },
+
+  brandAccent: {
+    color: "#D89B24",
+  },
+
+  brandSubtitle: {
+    marginTop: 7,
+    fontSize: 12,
+    color: "#A5ADB7",
+    letterSpacing: 0.5,
+  },
+
 });
