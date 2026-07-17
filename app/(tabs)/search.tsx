@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import {
   SafeAreaView,
   View,
@@ -8,9 +9,15 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  Image,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
+
 import { router } from "expo-router";
+
+import { Ionicons } from "@expo/vector-icons";
+
 import { supabase } from "../../services/supabase";
 
 export default function SearchScreen() {
@@ -22,23 +29,36 @@ export default function SearchScreen() {
 
   const [filteredPasswords, setFilteredPasswords] = useState<any[]>([]);
 
+  // ================================
+  // LOAD PASSWORDS
+  // ================================
+
   useEffect(() => {
     loadPasswords();
   }, []);
 
-  useEffect(() => {
-    if (search.trim() === "") {
-      setFilteredPasswords(passwords);
-    } else {
-      const filtered = passwords.filter((item) =>
-        item.app_name
-          ?.toLowerCase()
-          .includes(search.toLowerCase())
-      );
+  // ================================
+  // SEARCH FILTER
+  // ================================
 
-      setFilteredPasswords(filtered);
+  useEffect(() => {
+    const searchText = search.trim().toLowerCase();
+
+    if (searchText === "") {
+      setFilteredPasswords(passwords);
+      return;
     }
+
+    const filtered = passwords.filter((item) =>
+      item.app_name?.toLowerCase().includes(searchText)
+    );
+
+    setFilteredPasswords(filtered);
   }, [search, passwords]);
+
+  // ================================
+  // LOAD PASSWORDS + APP LOGOS
+  // ================================
 
   const loadPasswords = async () => {
     try {
@@ -53,27 +73,59 @@ export default function SearchScreen() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("passwords")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", {
-          ascending: false,
-        });
+      // Load user's saved passwords
+      const { data: passwordData, error: passwordError } =
+        await supabase
+          .from("passwords")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", {
+            ascending: false,
+          });
 
-      if (error) {
-        console.log(error.message);
-      } else {
-        setPasswords(data || []);
-        setFilteredPasswords(data || []);
+      if (passwordError) {
+        console.log("Password Error:", passwordError.message);
+        setLoading(false);
+        return;
       }
+
+      // Load app logos from app_catalog
+      const { data: catalogData, error: catalogError } =
+        await supabase
+          .from("app_catalog")
+          .select("app_name, logo_url");
+
+      if (catalogError) {
+        console.log("Catalog Error:", catalogError.message);
+      }
+
+      // Combine password data with logo data
+      const combinedData = (passwordData || []).map((password) => {
+        const catalogApp = (catalogData || []).find(
+          (app) =>
+            app.app_name?.trim().toLowerCase() ===
+            password.app_name?.trim().toLowerCase()
+        );
+
+        return {
+          ...password,
+          logo_url: catalogApp?.logo_url || null,
+        };
+      });
+
+      setPasswords(combinedData);
+      setFilteredPasswords(combinedData);
 
       setLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log("Load Error:", error);
       setLoading(false);
     }
   };
+
+  // ================================
+  // OPEN DETAILS
+  // ================================
 
   const openPassword = (id: string) => {
     router.push({
@@ -84,38 +136,47 @@ export default function SearchScreen() {
     });
   };
 
-  const renderItem = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles.passwordCard}
-      onPress={() => openPassword(item.id)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.cardLeft}>
+  // ================================
+  // PASSWORD ITEM
+  // ================================
 
-        <View style={styles.appIcon}>
-          <Text style={styles.appIconText}>
-            🔐
-          </Text>
+  const renderItem = ({ item }: any) => {
+    return (
+      <TouchableOpacity
+        style={styles.passwordCard}
+        onPress={() => openPassword(item.id)}
+        activeOpacity={0.75}
+      >
+        {/* APP LOGO */}
+
+        <View style={styles.logoBox}>
+          {item.logo_url ? (
+            <Image
+              source={{
+                uri: item.logo_url,
+              }}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={styles.logoLetter}>
+              {item.app_name?.charAt(0)?.toUpperCase()}
+            </Text>
+          )}
         </View>
 
-        <View style={styles.textContainer}>
-          <Text style={styles.appName}>
-            {item.app_name}
-          </Text>
+        {/* APP NAME */}
 
-          <Text style={styles.username}>
-            {item.username}
-          </Text>
-        </View>
+        <Text style={styles.appName} numberOfLines={1}>
+          {item.app_name}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
-      </View>
-
-      <Text style={styles.arrow}>
-        →
-      </Text>
-
-    </TouchableOpacity>
-  );
+  // ================================
+  // LOADING SCREEN
+  // ================================
 
   if (loading) {
     return (
@@ -124,51 +185,63 @@ export default function SearchScreen() {
 
         <ActivityIndicator
           size="large"
-          color="#2563EB"
+          color="#8B5CF6"
         />
 
         <Text style={styles.loadingText}>
-          Loading Passwords...
+          Loading passwords...
         </Text>
       </SafeAreaView>
     );
   }
 
+  // ================================
+  // MAIN UI
+  // ================================
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* Search Bar */}
+      {/* TOP SPACE */}
+
+      <View style={styles.topSpace} />
+
+      {/* SEARCH BAR */}
 
       <View style={styles.searchContainer}>
-
-        <Text style={styles.searchIcon}>
-          🔍
-        </Text>
+        <Ionicons
+          name="search-outline"
+          size={23}
+          color="#78716C"
+        />
 
         <TextInput
           style={styles.searchInput}
-          placeholder="Search passwords..."
-          placeholderTextColor="#9CA3AF"
+          placeholder="Search app or website"
+          placeholderTextColor="#A8A29E"
           value={search}
           onChangeText={setSearch}
           autoCapitalize="none"
           autoCorrect={false}
+          returnKeyType="search"
         />
 
         {search.length > 0 && (
           <TouchableOpacity
             onPress={() => setSearch("")}
+            activeOpacity={0.7}
           >
-            <Text style={styles.clearButton}>
-              ✕
-            </Text>
+            <Ionicons
+              name="close-circle"
+              size={21}
+              color="#A8A29E"
+            />
           </TouchableOpacity>
         )}
-
       </View>
 
-      {/* Suggested Passwords */}
+      {/* SECTION TITLE */}
 
       <Text style={styles.sectionTitle}>
         {search.trim() === ""
@@ -176,205 +249,219 @@ export default function SearchScreen() {
           : "SEARCH RESULTS"}
       </Text>
 
-      {/* Password List */}
+      {/* RESULTS */}
 
       {filteredPasswords.length === 0 ? (
-
         <View style={styles.emptyContainer}>
-
-          <Text style={styles.emptyIcon}>
-            🔍
-          </Text>
+          <Ionicons
+            name="search-outline"
+            size={58}
+            color="#D6D3D1"
+          />
 
           <Text style={styles.emptyTitle}>
-            No Passwords Found
+            No Password Found
           </Text>
 
           <Text style={styles.emptySubtitle}>
-            Try searching with another app name.
+            Try another app or website name.
           </Text>
-
         </View>
-
       ) : (
-
         <FlatList
           data={filteredPasswords}
-          keyExtractor={(item) =>
-            item.id.toString()
-          }
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.listContent}
         />
-
       )}
-
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+// =================================
+// STYLES
+// =================================
 
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: "#FAFAF9",
     paddingHorizontal: 20,
-    paddingTop: 50,
   },
 
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FAFAF9",
     justifyContent: "center",
     alignItems: "center",
   },
 
   loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    color: "#6B7280",
+    marginTop: 14,
+    fontSize: 15,
+    color: "#78716C",
   },
 
-  /* Search Bar */
+  // TOP SPACE
+
+  topSpace: {
+    height: 50,
+  },
+
+  // SEARCH BAR
 
   searchContainer: {
-    height: 58,
+    height: 60,
     backgroundColor: "#FFFFFF",
-    borderRadius: 17,
+    borderRadius: 18,
+    paddingHorizontal: 17,
+
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+
     borderWidth: 1,
-    borderColor: "#E1E7ED",
-    marginBottom: 25,
+    borderColor: "#E7E5E4",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
 
     elevation: 2,
-  },
-
-  searchIcon: {
-    fontSize: 20,
-    marginRight: 10,
   },
 
   searchInput: {
     flex: 1,
     height: "100%",
+    marginLeft: 12,
+
     fontSize: 16,
-    color: "#123B63",
+    color: "#292524",
+
+    // Important for Android
+    paddingVertical: 0,
   },
 
-  clearButton: {
-    fontSize: 18,
-    color: "#9CA3AF",
-    padding: 5,
-  },
-
-  /* Section Title */
+  // SECTION TITLE
 
   sectionTitle: {
+    marginTop: 28,
+    marginBottom: 15,
+
     fontSize: 13,
     fontWeight: "900",
-    color: "#123B63",
-    letterSpacing: 0.8,
-    marginBottom: 14,
+    letterSpacing: 1,
+
+    color: "#57534E",
   },
 
-  /* Password List */
+  // LIST
 
   listContent: {
-    paddingBottom: 30,
+    paddingBottom: 40,
   },
 
+  // PASSWORD CARD
+
   passwordCard: {
+    height: 76,
+
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
-    padding: 16,
-    marginBottom: 13,
+
+    paddingHorizontal: 16,
+    marginBottom: 12,
+
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
 
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#F0EFED",
 
-    shadowColor: "#123B63",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+
+    elevation: 2,
   },
 
-  cardLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
+  // LOGO
 
-  appIcon: {
+  logoBox: {
     width: 48,
     height: 48,
-    borderRadius: 15,
-    backgroundColor: "#EAF2F8",
+
+    borderRadius: 14,
+
+    backgroundColor: "#FFFFFF",
+
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 13,
+
+    overflow: "hidden",
+
+    borderWidth: 1,
+    borderColor: "#F0EFED",
   },
 
-  appIconText: {
-    fontSize: 23,
+  logo: {
+    width: 36,
+    height: 36,
   },
 
-  textContainer: {
-    flex: 1,
+  logoLetter: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#8B5CF6",
   },
+
+  // APP NAME
 
   appName: {
+    flex: 1,
+    marginLeft: 16,
+
     fontSize: 17,
     fontWeight: "800",
-    color: "#123B63",
+
+    color: "#292524",
   },
 
-  username: {
-    marginTop: 5,
-    fontSize: 13,
-    color: "#7A8491",
-  },
-
-  arrow: {
-    fontSize: 25,
-    color: "#D89B24",
-    fontWeight: "bold",
-    marginLeft: 10,
-  },
-
-  /* Empty State */
+  // EMPTY STATE
 
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+
     paddingHorizontal: 30,
   },
 
-  emptyIcon: {
-    fontSize: 58,
-    marginBottom: 18,
-  },
-
   emptyTitle: {
-    fontSize: 22,
+    marginTop: 18,
+
+    fontSize: 21,
     fontWeight: "900",
-    color: "#123B63",
-    marginBottom: 8,
+
+    color: "#44403C",
   },
 
   emptySubtitle: {
-    fontSize: 15,
-    color: "#7A8491",
-    textAlign: "center",
-    lineHeight: 23,
-  },
+    marginTop: 8,
 
+    fontSize: 15,
+    color: "#A8A29E",
+
+    textAlign: "center",
+  },
 });

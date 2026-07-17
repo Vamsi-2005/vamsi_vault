@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -9,11 +9,11 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 
 import {
   Ionicons,
@@ -23,6 +23,10 @@ import {
 import { supabase } from "../../services/supabase";
 
 export default function AddPasswordScreen() {
+  // =========================
+  // PASSWORD FORM STATES
+  // =========================
+
   const [appName, setAppName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -30,22 +34,121 @@ export default function AddPasswordScreen() {
   const [website, setWebsite] = useState("");
 
   const [category, setCategory] = useState("Social");
+
   const [hidePassword, setHidePassword] = useState(true);
+
   const [loading, setLoading] = useState(false);
+
+  // =========================
+  // APP CATALOG STATES
+  // =========================
+
+  const [appSuggestions, setAppSuggestions] =
+    useState<any[]>([]);
+
+  const [searchingApps, setSearchingApps] =
+    useState(false);
+
+  // =========================
+  // SEARCH APP CATALOG
+  // =========================
+
+  useEffect(() => {
+    const searchApps = async () => {
+      const searchText = appName.trim();
+
+      if (!searchText) {
+        setAppSuggestions([]);
+        return;
+      }
+
+      try {
+        setSearchingApps(true);
+
+        const { data, error } = await supabase
+          .from("app_catalog")
+          .select("*")
+          .ilike(
+            "app_name",
+            `%${searchText}%`
+          )
+          .limit(10);
+
+        if (error) {
+          console.log(
+            "Search error:",
+            error.message
+          );
+
+          setAppSuggestions([]);
+        } else {
+          setAppSuggestions(data || []);
+        }
+
+        setSearchingApps(false);
+
+      } catch (error) {
+        console.log(error);
+
+        setSearchingApps(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      searchApps();
+    }, 300);
+
+    return () => clearTimeout(timer);
+
+  }, [appName]);
+
+  // =========================
+  // SELECT APP
+  // =========================
+
+  const selectApp = (app: any) => {
+    setAppName(app.app_name);
+
+    if (app.category) {
+      setCategory(app.category);
+    }
+
+    if (app.website_url) {
+      setWebsite(app.website_url);
+    }
+
+    setAppSuggestions([]);
+  };
+
+  // =========================
+  // SAVE PASSWORD
+  // =========================
 
   const savePassword = async () => {
     if (!appName.trim()) {
-      Alert.alert("Validation", "Please enter App Name.");
+      Alert.alert(
+        "Validation",
+        "Please enter App or Website name."
+      );
+
       return;
     }
 
     if (!username.trim()) {
-      Alert.alert("Validation", "Please enter Username.");
+      Alert.alert(
+        "Validation",
+        "Please enter Username."
+      );
+
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert("Validation", "Please enter Password.");
+      Alert.alert(
+        "Validation",
+        "Please enter Password."
+      );
+
       return;
     }
 
@@ -57,13 +160,15 @@ export default function AddPasswordScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
+        setLoading(false);
+
         Alert.alert(
           "Session Expired",
           "Please login again."
         );
 
-        setLoading(false);
         router.replace("/(auth)/login");
+
         return;
       }
 
@@ -72,11 +177,11 @@ export default function AddPasswordScreen() {
         .insert([
           {
             user_id: user.id,
-            app_name: appName,
-            username: username,
-            email: email,
+            app_name: appName.trim(),
+            username: username.trim(),
+            email: email.trim(),
             password: password,
-            website: website,
+            website: website.trim(),
             category: category,
           },
         ]);
@@ -84,14 +189,20 @@ export default function AddPasswordScreen() {
       setLoading(false);
 
       if (error) {
-        Alert.alert("Error", error.message);
+        Alert.alert(
+          "Save Failed",
+          error.message
+        );
+
         return;
       }
 
       Alert.alert(
         "Success",
-        "Password Saved Successfully."
+        "Password saved successfully."
       );
+
+      // CLEAR FORM
 
       setAppName("");
       setUsername("");
@@ -100,7 +211,9 @@ export default function AddPasswordScreen() {
       setWebsite("");
       setCategory("Social");
 
-      router.replace("/(tabs)/dashboard");
+      router.replace(
+        "/(tabs)/dashboard"
+      );
 
     } catch (error) {
       setLoading(false);
@@ -114,6 +227,7 @@ export default function AddPasswordScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <StatusBar style="dark" />
 
       <ScrollView
@@ -121,322 +235,700 @@ export default function AddPasswordScreen() {
         contentContainerStyle={styles.scroll}
       >
 
-        {/* MAIN HEADING */}
-        <Text style={styles.mainTitle}>
-          ADD PASSWORD
-        </Text>
+        {/* =========================
+            HEADER
+        ========================== */}
 
-        {/* APP / WEBSITE */}
+        <View style={styles.header}>
+
+          <Text style={styles.title}>
+            Add Password
+          </Text>
+
+          <Text style={styles.subtitle}>
+            Securely save your account details
+          </Text>
+
+        </View>
+
+        {/* =========================
+            APP / WEBSITE
+        ========================== */}
+
         <Text style={styles.label}>
           App or Website
         </Text>
 
-        <View style={styles.inputCard}>
-          <MaterialCommunityIcons
-            name="web"
-            size={23}
-            color="#6366F1"
+        <View style={styles.searchBox}>
+
+          <Ionicons
+            name="search-outline"
+            size={22}
+            color="#7A8491"
           />
 
           <TextInput
-            style={styles.input}
-            placeholder="Instagram"
+            style={styles.searchInput}
+            placeholder="Search Instagram, Google..."
+            placeholderTextColor="#9CA3AF"
             value={appName}
             onChangeText={setAppName}
-            placeholderTextColor="#9CA3AF"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
+
+          {appName.length > 0 && (
+
+            <TouchableOpacity
+              onPress={() => {
+                setAppName("");
+                setAppSuggestions([]);
+              }}
+            >
+
+              <Ionicons
+                name="close-circle"
+                size={21}
+                color="#9CA3AF"
+              />
+
+            </TouchableOpacity>
+
+          )}
+
         </View>
 
-        {/* USERNAME */}
+        {/* =========================
+            SEARCH LOADING
+        ========================== */}
+
+        {searchingApps && (
+
+          <View style={styles.searchLoading}>
+
+            <ActivityIndicator
+              size="small"
+              color="#064B78"
+            />
+
+          </View>
+
+        )}
+
+        {/* =========================
+            APP SUGGESTIONS
+        ========================== */}
+
+        {appSuggestions.length > 0 && (
+
+          <View style={styles.suggestionBox}>
+
+            {appSuggestions.map((app) => (
+
+              <TouchableOpacity
+                key={app.id}
+                style={styles.appSuggestion}
+                onPress={() =>
+                  selectApp(app)
+                }
+                activeOpacity={0.7}
+              >
+
+                {/* LOGO */}
+
+                <View
+                  style={
+                    styles.logoContainer
+                  }
+                >
+
+                  {app.logo_url ? (
+
+                    <Image
+                      source={{
+                        uri: app.logo_url,
+                      }}
+                      style={styles.logo}
+                    />
+
+                  ) : (
+
+                    <MaterialCommunityIcons
+                      name="web"
+                      size={24}
+                      color="#374151"
+                    />
+
+                  )}
+
+                </View>
+
+                {/* APP NAME */}
+
+                <Text
+                  style={styles.appName}
+                >
+                  {app.app_name}
+                </Text>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color="#9CA3AF"
+                />
+
+              </TouchableOpacity>
+
+            ))}
+
+          </View>
+
+        )}
+
+        {/* =========================
+            USERNAME
+        ========================== */}
+
         <Text style={styles.label}>
           Username
         </Text>
 
-        <View style={styles.inputCard}>
+        <View style={styles.inputBox}>
+
           <Ionicons
             name="person-outline"
-            size={23}
-            color="#6366F1"
+            size={22}
+            color="#7A8491"
           />
 
           <TextInput
             style={styles.input}
-            placeholder="vamsi123"
+            placeholder="Enter username"
+            placeholderTextColor="#9CA3AF"
             value={username}
             onChangeText={setUsername}
-            placeholderTextColor="#9CA3AF"
+            autoCapitalize="none"
           />
+
         </View>
 
-        {/* EMAIL */}
+        {/* =========================
+            EMAIL
+        ========================== */}
+
         <Text style={styles.label}>
           Email
         </Text>
 
-        <View style={styles.inputCard}>
+        <View style={styles.inputBox}>
+
           <MaterialCommunityIcons
             name="email-outline"
-            size={23}
-            color="#6366F1"
+            size={22}
+            color="#7A8491"
           />
 
           <TextInput
             style={styles.input}
-            placeholder="vamsi@gmail.com"
+            placeholder="Enter email"
+            placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
-            placeholderTextColor="#9CA3AF"
           />
+
         </View>
 
-        {/* PASSWORD */}
+        {/* =========================
+            PASSWORD
+        ========================== */}
+
         <Text style={styles.label}>
           Password
         </Text>
 
-        <View style={styles.inputCard}>
+        <View style={styles.inputBox}>
+
           <Ionicons
             name="lock-closed-outline"
-            size={23}
-            color="#6366F1"
+            size={22}
+            color="#7A8491"
           />
 
           <TextInput
             style={styles.input}
-            placeholder="Enter Password"
-            secureTextEntry={hidePassword}
+            placeholder="Enter password"
+            placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
-            placeholderTextColor="#9CA3AF"
+            secureTextEntry={hidePassword}
           />
 
           <TouchableOpacity
             onPress={() =>
-              setHidePassword(!hidePassword)
+              setHidePassword(
+                !hidePassword
+              )
             }
           >
+
             <Ionicons
               name={
                 hidePassword
                   ? "eye-outline"
                   : "eye-off-outline"
               }
-              size={24}
-              color="#6366F1"
+              size={23}
+              color="#7A8491"
             />
+
           </TouchableOpacity>
+
         </View>
 
-        {/* CATEGORY */}
+        {/* =========================
+            WEBSITE
+        ========================== */}
+
+        <Text style={styles.label}>
+          Website URL
+        </Text>
+
+        <View style={styles.inputBox}>
+
+          <MaterialCommunityIcons
+            name="link-variant"
+            size={22}
+            color="#7A8491"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="https://example.com"
+            placeholderTextColor="#9CA3AF"
+            value={website}
+            onChangeText={setWebsite}
+            autoCapitalize="none"
+          />
+
+        </View>
+
+        {/* =========================
+            CATEGORY
+        ========================== */}
+
         <Text style={styles.categoryTitle}>
           CATEGORY
         </Text>
 
-        <View style={styles.categoryContainer}>
+        <View
+          style={
+            styles.categoryContainer
+          }
+        >
+
           {[
             "Social",
             "Email",
             "Banking",
             "Shopping",
+            "Development",
+            "Gaming",
+            "Education",
             "Work",
+            "Entertainment",
+            "Finance",
+            "Travel",
+            "Health",
             "Others",
           ].map((item) => (
+
             <TouchableOpacity
               key={item}
               style={[
                 styles.categoryChip,
+
                 category === item &&
-                  styles.selectedChip,
+                  styles.selectedCategory,
               ]}
-              onPress={() => setCategory(item)}
+              onPress={() =>
+                setCategory(item)
+              }
             >
+
               <Text
                 style={[
                   styles.categoryText,
+
                   category === item &&
-                    styles.selectedText,
+                    styles.selectedCategoryText,
                 ]}
               >
                 {item}
               </Text>
+
             </TouchableOpacity>
+
           ))}
+
         </View>
 
-        {/* WEBSITE */}
-        <Text style={styles.label}>
-          Website URL (Optional)
-        </Text>
+        {/* =========================
+            SAVE BUTTON
+        ========================== */}
 
-        <View style={styles.inputCard}>
-          <MaterialCommunityIcons
-            name="link-variant"
-            size={23}
-            color="#6366F1"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="https://instagram.com"
-            value={website}
-            onChangeText={setWebsite}
-            autoCapitalize="none"
-            placeholderTextColor="#9CA3AF"
-          />
-        </View>
-
-        {/* SAVE BUTTON */}
         <TouchableOpacity
           style={styles.saveButton}
           onPress={savePassword}
           disabled={loading}
-          activeOpacity={0.9}
+          activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={["#5B5FEF", "#7C4DFF"]}
-            style={styles.gradientButton}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={23}
-                  color="#FFFFFF"
-                />
 
-                <Text style={styles.saveButtonText}>
-                  Save to Vault
-                </Text>
-              </>
-            )}
-          </LinearGradient>
+          {loading ? (
+
+            <ActivityIndicator
+              color="#FFFFFF"
+            />
+
+          ) : (
+
+            <>
+
+              <Ionicons
+                name="lock-closed"
+                size={21}
+                color="#FFFFFF"
+              />
+
+              <Text
+                style={styles.saveText}
+              >
+                Save to Vault
+              </Text>
+
+            </>
+
+          )}
+
         </TouchableOpacity>
 
       </ScrollView>
+
     </SafeAreaView>
   );
 }
 
+// =========================
+// STYLES
+// =========================
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFF",
-    paddingTop: 30,
+    backgroundColor: "#FFFFFF",
   },
 
   scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: 22,
+
+    // MORE TOP SPACE
+    paddingTop: 60,
+
     paddingBottom: 50,
   },
 
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#1F2937",
-    textAlign: "center",
-    marginBottom: 25,
-    letterSpacing: 1,
+  // =========================
+  // HEADER
+  // =========================
+
+  header: {
+    alignItems: "center",
+    marginBottom: 32,
   },
+
+  title: {
+    fontSize: 35,
+    fontWeight: "900",
+    color: "#123B63",
+    textAlign: "center",
+    letterSpacing: 0.3,
+  },
+
+  subtitle: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#7A8491",
+    textAlign: "center",
+  },
+
+  // =========================
+  // LABEL
+  // =========================
 
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginTop: 16,
-    marginBottom: 8,
+    fontWeight: "800",
+    color: "#123B63",
+    marginTop: 20,
+    marginBottom: 9,
+    letterSpacing: 0.3,
   },
 
-  inputCard: {
-    height: 62,
-    backgroundColor: "#FFFFFF",
+  // =========================
+  // SEARCH
+  // =========================
+
+  searchBox: {
+    height: 58,
+
+    borderWidth: 1,
+    borderColor: "#D7E0E8",
+
+    borderRadius: 17,
+
     flexDirection: "row",
+
     alignItems: "center",
-    borderRadius: 16,
+
     paddingHorizontal: 16,
 
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    backgroundColor: "#F8FAFC",
+  },
 
-    elevation: 3,
+  searchInput: {
+    flex: 1,
+
+    marginLeft: 11,
+
+    fontSize: 16,
+
+    color: "#123B63",
+
+    fontWeight: "500",
+  },
+
+  // =========================
+  // INPUT
+  // =========================
+
+  inputBox: {
+    height: 58,
+
+    borderWidth: 1,
+    borderColor: "#D7E0E8",
+
+    borderRadius: 17,
+
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    paddingHorizontal: 16,
+
+    backgroundColor: "#F8FAFC",
   },
 
   input: {
     flex: 1,
-    marginLeft: 12,
+
+    marginLeft: 11,
+
     fontSize: 16,
-    color: "#111827",
+
+    color: "#123B63",
+
+    fontWeight: "500",
   },
+
+  // =========================
+  // SEARCH LOADING
+  // =========================
+
+  searchLoading: {
+    paddingVertical: 12,
+
+    alignItems: "center",
+  },
+
+  // =========================
+  // SUGGESTIONS
+  // =========================
+
+  suggestionBox: {
+    marginTop: 8,
+
+    backgroundColor: "#FFFFFF",
+
+    borderWidth: 1,
+
+    borderColor: "#D7E0E8",
+
+    borderRadius: 17,
+
+    overflow: "hidden",
+
+    elevation: 3,
+  },
+
+  appSuggestion: {
+    minHeight: 70,
+
+    paddingHorizontal: 14,
+
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    borderBottomWidth: 1,
+
+    borderBottomColor: "#F3F4F6",
+  },
+
+  logoContainer: {
+    width: 44,
+
+    height: 44,
+
+    borderRadius: 12,
+
+    backgroundColor: "#F3F4F6",
+
+    justifyContent: "center",
+
+    alignItems: "center",
+
+    overflow: "hidden",
+  },
+
+  logo: {
+    width: 44,
+
+    height: 44,
+
+    resizeMode: "contain",
+  },
+
+  appName: {
+    flex: 1,
+
+    marginLeft: 13,
+
+    fontSize: 16,
+
+    fontWeight: "700",
+
+    color: "#123B63",
+  },
+
+  // =========================
+  // CATEGORY
+  // =========================
 
   categoryTitle: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#374151",
-    marginTop: 28,
+
+    fontWeight: "800",
+
+    color: "#123B63",
+
+    marginTop: 30,
+
     marginBottom: 12,
+
     letterSpacing: 1,
   },
 
   categoryContainer: {
     flexDirection: "row",
+
     flexWrap: "wrap",
-    justifyContent: "space-between",
+
+    gap: 10,
   },
 
   categoryChip: {
-    width: "31%",
-    height: 45,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
+    paddingHorizontal: 16,
+
+    height: 42,
+
+    borderRadius: 21,
+
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+
+    borderColor: "#D7E0E8",
+
+    backgroundColor: "#FFFFFF",
+
+    justifyContent: "center",
+
+    alignItems: "center",
   },
 
-  selectedChip: {
-    backgroundColor: "#6366F1",
-    borderColor: "#6366F1",
+  selectedCategory: {
+    backgroundColor: "#064B78",
+
+    borderColor: "#064B78",
   },
 
   categoryText: {
     fontSize: 13,
+
     fontWeight: "600",
-    color: "#4B5563",
+
+    color: "#7A8491",
   },
 
-  selectedText: {
+  selectedCategoryText: {
     color: "#FFFFFF",
   },
+
+  // =========================
+  // SAVE BUTTON
+  // =========================
 
   saveButton: {
-    marginTop: 28,
-    marginBottom: 30,
-    borderRadius: 18,
-    overflow: "hidden",
-  },
+    height: 61,
 
-  gradientButton: {
-    height: 62,
-    justifyContent: "center",
-    alignItems: "center",
+    borderRadius: 17,
+
+    backgroundColor: "#064B78",
+
+    marginTop: 34,
+
     flexDirection: "row",
+
+    justifyContent: "center",
+
+    alignItems: "center",
+
+    elevation: 6,
+
+    shadowColor: "#064B78",
+
+    shadowOffset: {
+      width: 0,
+
+      height: 5,
+    },
+
+    shadowOpacity: 0.25,
+
+    shadowRadius: 7,
   },
 
-  saveButtonText: {
+  saveText: {
     color: "#FFFFFF",
+
     fontSize: 17,
-    fontWeight: "700",
+
+    fontWeight: "800",
+
     marginLeft: 9,
+
+    letterSpacing: 0.3,
   },
+
 });
+

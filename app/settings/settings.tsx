@@ -10,57 +10,56 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../services/supabase";
 
 export default function SettingsScreen() {
-  const [newPassword, setNewPassword] =
-    useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
-
-  const [hidePassword, setHidePassword] =
+  const [hideNewPassword, setHideNewPassword] = useState(true);
+  const [hideConfirmPassword, setHideConfirmPassword] =
     useState(true);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const changePassword = async () => {
-
     if (!newPassword.trim()) {
-
       Alert.alert(
         "Validation",
         "Please enter a new password."
       );
-
       return;
     }
 
     if (newPassword.length < 6) {
-
       Alert.alert(
         "Validation",
         "Password must be at least 6 characters."
       );
+      return;
+    }
 
+    if (!confirmPassword.trim()) {
+      Alert.alert(
+        "Validation",
+        "Please confirm your password."
+      );
       return;
     }
 
     if (newPassword !== confirmPassword) {
-
       Alert.alert(
         "Validation",
         "Passwords do not match."
       );
-
       return;
     }
 
     try {
-
       setLoading(true);
 
       const { error } =
@@ -71,12 +70,10 @@ export default function SettingsScreen() {
       setLoading(false);
 
       if (error) {
-
         Alert.alert(
           "Update Failed",
           error.message
         );
-
         return;
       }
 
@@ -89,7 +86,6 @@ export default function SettingsScreen() {
       setConfirmPassword("");
 
     } catch (error) {
-
       setLoading(false);
 
       Alert.alert(
@@ -97,56 +93,6 @@ export default function SettingsScreen() {
         "Something went wrong."
       );
     }
-
-  };
-
-  const logout = () => {
-
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: confirmLogout,
-        },
-      ]
-    );
-
-  };
-
-  const confirmLogout = async () => {
-
-    try {
-
-      const { error } =
-        await supabase.auth.signOut();
-
-      if (error) {
-
-        Alert.alert(
-          "Logout Failed",
-          error.message
-        );
-
-        return;
-      }
-
-      router.replace("/home");
-
-    } catch (error) {
-
-      Alert.alert(
-        "Error",
-        "Something went wrong."
-      );
-    }
-
   };
 
   return (
@@ -155,237 +101,368 @@ export default function SettingsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          padding: 20,
-          paddingBottom: 40,
-        }}
+        contentContainerStyle={styles.scrollContent}
       >
-                <TouchableOpacity
-          onPress={() => router.back()}
-        >
-          <Text style={styles.back}>
-            ← Back
+
+        {/* TOP SPACE */}
+
+        <View style={styles.topSpace} />
+
+        {/* HEADER */}
+
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            Change Password
           </Text>
-        </TouchableOpacity>
 
-        <Text style={styles.title}>
-          ⚙️ Settings
-        </Text>
+          <Text style={styles.subtitle}>
+            Update your password to keep your account secure.
+          </Text>
+        </View>
 
-        <Text style={styles.subtitle}>
-          Manage your account settings.
-        </Text>
+        {/* PASSWORD SECTION */}
 
-        {/* Change Password */}
+        <View style={styles.passwordCard}>
 
-        <Text style={styles.label}>
-          🔐 New Password
-        </Text>
+          <View style={styles.cardHeader}>
+            <View style={styles.iconBox}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={24}
+                color="#064B78"
+              />
+            </View>
 
-        <View style={styles.passwordContainer}>
+            <View>
+              <Text style={styles.cardTitle}>
+                New Password
+              </Text>
 
-          <TextInput
-            style={styles.passwordInput}
-            placeholder="Enter New Password"
-            secureTextEntry={hidePassword}
-            value={newPassword}
-            onChangeText={setNewPassword}
-          />
+              <Text style={styles.cardSubtitle}>
+                Create a strong password
+              </Text>
+            </View>
+          </View>
+
+          {/* NEW PASSWORD */}
+
+          <Text style={styles.label}>
+            New Password
+          </Text>
+
+          <View style={styles.inputContainer}>
+
+            <Ionicons
+              name="key-outline"
+              size={21}
+              color="#064B78"
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Enter new password"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry={hideNewPassword}
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+
+            <TouchableOpacity
+              onPress={() =>
+                setHideNewPassword(
+                  !hideNewPassword
+                )
+              }
+            >
+              <Ionicons
+                name={
+                  hideNewPassword
+                    ? "eye-outline"
+                    : "eye-off-outline"
+                }
+                size={23}
+                color="#6B7280"
+              />
+            </TouchableOpacity>
+
+          </View>
+
+          {/* CONFIRM PASSWORD */}
+
+          <Text style={styles.label}>
+            Confirm Password
+          </Text>
+
+          <View style={styles.inputContainer}>
+
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={21}
+              color="#064B78"
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm new password"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry={
+                hideConfirmPassword
+              }
+              value={confirmPassword}
+              onChangeText={
+                setConfirmPassword
+              }
+            />
+
+            <TouchableOpacity
+              onPress={() =>
+                setHideConfirmPassword(
+                  !hideConfirmPassword
+                )
+              }
+            >
+              <Ionicons
+                name={
+                  hideConfirmPassword
+                    ? "eye-outline"
+                    : "eye-off-outline"
+                }
+                size={23}
+                color="#6B7280"
+              />
+            </TouchableOpacity>
+
+          </View>
+
+          {/* CHANGE BUTTON */}
 
           <TouchableOpacity
-            onPress={() =>
-              setHidePassword(!hidePassword)
-            }
+            style={styles.button}
+            onPress={changePassword}
+            disabled={loading}
+            activeOpacity={0.85}
           >
-            <Text style={styles.show}>
-              {hidePassword ? "👁" : "🙈"}
-            </Text>
+
+            {loading ? (
+
+              <ActivityIndicator
+                color="#FFFFFF"
+              />
+
+            ) : (
+
+              <>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={21}
+                  color="#FFFFFF"
+                />
+
+                <Text style={styles.buttonText}>
+                  Change Password
+                </Text>
+              </>
+
+            )}
+
           </TouchableOpacity>
 
         </View>
 
-        <Text style={styles.label}>
-          🔒 Confirm Password
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          secureTextEntry={hidePassword}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={changePassword}
-          disabled={loading}
-        >
-
-          {loading ? (
-
-            <ActivityIndicator
-              color="#FFFFFF"
-            />
-
-          ) : (
-
-            <Text style={styles.buttonText}>
-              🔐 Change Password
-            </Text>
-
-          )}
-
-        </TouchableOpacity>
-
-        {/* Logout */}
-
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={logout}
-        >
-          <Text style={styles.logoutText}>
-            🚪 Logout
-          </Text>
-        </TouchableOpacity>
-
-        {/* App Version */}
+        {/* APP VERSION */}
 
         <View style={styles.versionCard}>
 
-          <Text style={styles.versionTitle}>
-            📱 App Version
-          </Text>
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={25}
+            color="#064B78"
+          />
 
-          <Text style={styles.versionText}>
-            Version 1.0.0
-          </Text>
+          <View style={styles.versionTextContainer}>
+
+            <Text style={styles.versionTitle}>
+              Vamsi Vault
+            </Text>
+
+            <Text style={styles.versionText}>
+              Version 1.0.0
+            </Text>
+
+          </View>
 
         </View>
 
       </ScrollView>
-
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: "#F4F8FB",
   },
 
-  back: {
-    fontSize: 16,
-    color: "#2563EB",
-    fontWeight: "600",
-    marginBottom: 20,
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 45,
+  },
+
+  topSpace: {
+    height: 55,
+  },
+
+  header: {
+    marginBottom: 28,
   },
 
   title: {
     fontSize: 30,
-    fontWeight: "bold",
-    color: "#2563EB",
-    marginBottom: 8,
+    fontWeight: "900",
+    color: "#123047",
+    letterSpacing: 0.3,
   },
 
   subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 30,
+    fontSize: 15,
+    color: "#6B7280",
+    marginTop: 8,
+    lineHeight: 22,
+  },
+
+  passwordCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 20,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+
+    elevation: 3,
+  },
+
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+
+  iconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: "#E8F2F8",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+
+  cardTitle: {
+    fontSize: 19,
+    fontWeight: "800",
+    color: "#123047",
+  },
+
+  cardSubtitle: {
+    fontSize: 13,
+    color: "#7B8790",
+    marginTop: 4,
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#374151",
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 14,
+  },
+
+  inputContainer: {
+    height: 58,
+    borderWidth: 1,
+    borderColor: "#DCE5EA",
+    borderRadius: 16,
+    backgroundColor: "#FAFCFD",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
   },
 
   input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 14,
-    height: 55,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    marginBottom: 15,
-  },
-
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 14,
-    height: 55,
-    paddingHorizontal: 16,
-    marginBottom: 15,
-  },
-
-  passwordInput: {
     flex: 1,
+    marginLeft: 11,
+    marginRight: 10,
     fontSize: 16,
-  },
-
-  show: {
-    fontSize: 22,
-    marginLeft: 10,
+    color: "#1F2937",
   },
 
   button: {
-    backgroundColor: "#2563EB",
-    borderRadius: 16,
-    height: 58,
+    height: 59,
+    borderRadius: 17,
+    backgroundColor: "#064B78",
+    marginTop: 28,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    elevation: 3,
+
+    shadowColor: "#064B78",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+
+    elevation: 4,
   },
 
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  logoutButton: {
-    backgroundColor: "#EF4444",
-    borderRadius: 16,
-    height: 58,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 25,
-    elevation: 3,
-  },
-
-  logoutText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 17,
+    fontWeight: "800",
+    marginLeft: 9,
   },
 
   versionCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 35,
+    borderRadius: 20,
+    padding: 18,
+    marginTop: 24,
+    flexDirection: "row",
     alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+
     elevation: 2,
   },
 
+  versionTextContainer: {
+    marginLeft: 13,
+  },
+
   versionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#123047",
   },
 
   versionText: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 13,
+    color: "#7B8790",
+    marginTop: 3,
   },
-});
 
+});

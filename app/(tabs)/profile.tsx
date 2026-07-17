@@ -45,10 +45,6 @@ export default function ProfileScreen() {
   const [logoutLoading, setLogoutLoading] =
     useState(false);
 
-  // ==============================
-  // LOAD PROFILE
-  // ==============================
-
   useEffect(() => {
     loadProfile();
   }, []);
@@ -102,10 +98,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ==============================
-  // LOAD PASSWORD COUNT
-  // ==============================
-
   const loadPasswordCount = async (
     userId: string
   ) => {
@@ -135,10 +127,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ==============================
-  // CHOOSE IMAGE
-  // ==============================
-
   const chooseImage = async () => {
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -167,13 +155,10 @@ export default function ProfileScreen() {
     const selectedAsset =
       result.assets[0];
 
-    // ==============================
-    // MAX 5 MB CHECK
-    // ==============================
-
     if (
       selectedAsset.fileSize &&
-      selectedAsset.fileSize > 5 * 1024 * 1024
+      selectedAsset.fileSize >
+        5 * 1024 * 1024
     ) {
       Alert.alert(
         "Image Too Large",
@@ -187,10 +172,6 @@ export default function ProfileScreen() {
       selectedAsset.uri
     );
   };
-
-  // ==============================
-  // UPLOAD PROFILE IMAGE
-  // ==============================
 
   const uploadProfileImage = async (
     uri: string,
@@ -243,10 +224,6 @@ export default function ProfileScreen() {
       return null;
     }
   };
-
-  // ==============================
-  // SAVE PROFILE
-  // ==============================
 
   const saveProfile = async () => {
     if (!editName.trim()) {
@@ -354,10 +331,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ==============================
-  // OPEN EDIT PROFILE
-  // ==============================
-
   const openEditProfile = () => {
     setEditName(fullName);
 
@@ -367,10 +340,6 @@ export default function ProfileScreen() {
 
     setEditModalVisible(true);
   };
-
-  // ==============================
-  // LOGOUT
-  // ==============================
 
   const logout = () => {
     Alert.alert(
@@ -419,10 +388,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // ==============================
-  // LOADING
-  // ==============================
-
   if (loading) {
     return (
       <SafeAreaView
@@ -434,7 +399,7 @@ export default function ProfileScreen() {
 
         <ActivityIndicator
           size="large"
-          color="#2563EB"
+          color="#064B78"
         />
 
         <Text
@@ -448,23 +413,15 @@ export default function ProfileScreen() {
     );
   }
 
-  // ==============================
-  // UI
-  // ==============================
-
   return (
     <SafeAreaView
       style={styles.container}
     >
       <StatusBar style="dark" />
 
-      {/* TOP SPACE */}
-
       <View
         style={styles.topSpace}
       />
-
-      {/* PROFILE TITLE */}
 
       <Text
         style={styles.pageTitle}
@@ -480,8 +437,6 @@ export default function ProfileScreen() {
         <View
           style={styles.profileInfo}
         >
-
-          {/* SQUARE PROFILE IMAGE */}
 
           <View
             style={styles.avatar}
@@ -506,8 +461,6 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* USER DETAILS */}
-
           <View
             style={styles.userDetails}
           >
@@ -525,8 +478,6 @@ export default function ProfileScreen() {
           </View>
 
         </View>
-
-        {/* EDIT PROFILE */}
 
         <TouchableOpacity
           style={
@@ -561,8 +512,6 @@ export default function ProfileScreen() {
         }
       >
 
-        {/* PASSWORD COUNT */}
-
         <View
           style={
             styles.vaultCard
@@ -592,8 +541,6 @@ export default function ProfileScreen() {
             Passwords
           </Text>
         </View>
-
-        {/* SECURE VAULT */}
 
         <View
           style={
@@ -756,8 +703,6 @@ export default function ProfileScreen() {
               Edit Profile
             </Text>
 
-            {/* IMAGE */}
-
             <TouchableOpacity
               style={
                 styles.editAvatar
@@ -804,8 +749,6 @@ export default function ProfileScreen() {
               Tap to choose photo
             </Text>
 
-            {/* NAME */}
-
             <TextInput
               style={
                 styles.nameInput
@@ -816,8 +759,6 @@ export default function ProfileScreen() {
                 setEditName
               }
             />
-
-            {/* SAVE */}
 
             <TouchableOpacity
               style={
@@ -845,8 +786,6 @@ export default function ProfileScreen() {
               )}
             </TouchableOpacity>
 
-            {/* CANCEL */}
-
             <TouchableOpacity
               onPress={() =>
                 setEditModalVisible(
@@ -872,22 +811,18 @@ export default function ProfileScreen() {
   );
 }
 
-// ==============================
-// STYLES
-// ==============================
-
 const styles = StyleSheet.create({
 
   container: {
-  flex: 1,
-  backgroundColor: "#F5F7FB",
-  paddingHorizontal: 24,
-  paddingTop: 30,//added top padding
-},
+    flex: 1,
+    backgroundColor: "#F5F7FB",
+    paddingHorizontal: 24,
+    paddingTop: 30,
+  },
 
-topSpace: {
-  height: 25,
-},
+  topSpace: {
+    height: 25,
+  },
 
   loadingContainer: {
     flex: 1,
@@ -921,8 +856,6 @@ topSpace: {
     flexDirection: "row",
     alignItems: "center",
   },
-
-  // SQUARE PROFILE IMAGE
 
   avatar: {
     width: 78,
@@ -966,7 +899,7 @@ topSpace: {
   },
 
   editText: {
-    color: "#2563EB",
+    color: "#064B78",
     fontSize: 15,
     fontWeight: "700",
   },
@@ -1003,13 +936,13 @@ topSpace: {
   vaultNumber: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#2563EB",
+    color: "#064B78",
   },
 
   secureText: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#2563EB",
+    color: "#064B78",
   },
 
   vaultLabel: {
@@ -1052,12 +985,20 @@ topSpace: {
 
   logoutButton: {
     height: 58,
-    backgroundColor: "#2563EB",
+    backgroundColor: "#064B78",
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 8,
     elevation: 3,
+
+    shadowColor: "#064B78",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 7,
   },
 
   logoutText: {
@@ -1066,14 +1007,9 @@ topSpace: {
     fontWeight: "700",
   },
 
-  // ==============================
-  // MODAL
-  // ==============================
-
   modalBackground: {
     flex: 1,
-    backgroundColor:
-      "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
 
@@ -1119,14 +1055,14 @@ topSpace: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#2563EB",
+    backgroundColor: "#064B78",
     justifyContent: "center",
     alignItems: "center",
   },
 
   changePhotoText: {
     marginTop: 12,
-    color: "#2563EB",
+    color: "#064B78",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -1147,7 +1083,7 @@ topSpace: {
     width: "100%",
     height: 55,
     borderRadius: 14,
-    backgroundColor: "#2563EB",
+    backgroundColor: "#064B78",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 20,

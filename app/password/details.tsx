@@ -1,21 +1,33 @@
 import React, { useEffect, useState } from "react";
+
 import {
   SafeAreaView,
+  ScrollView,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
-import { router, useLocalSearchParams } from "expo-router";
+
+import {
+  router,
+  useLocalSearchParams,
+} from "expo-router";
+
+import { Ionicons } from "@expo/vector-icons";
+
 import { supabase } from "../../services/supabase";
 
 export default function PasswordDetailsScreen() {
   const { id } = useLocalSearchParams();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
   const [hidePassword, setHidePassword] =
     useState(true);
@@ -23,41 +35,85 @@ export default function PasswordDetailsScreen() {
   const [passwordData, setPasswordData] =
     useState<any>(null);
 
+  const [logoUrl, setLogoUrl] =
+    useState<string | null>(null);
+
   useEffect(() => {
     if (id) {
       loadPassword();
     }
-  }, []);
+  }, [id]);
+
+  // =====================================
+  // LOAD PASSWORD + APP LOGO
+  // =====================================
 
   const loadPassword = async () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      // LOAD PASSWORD DETAILS
+      const {
+        data: password,
+        error: passwordError,
+      } = await supabase
         .from("passwords")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) {
+      if (passwordError) {
         Alert.alert(
           "Error",
-          error.message
+          passwordError.message
         );
-      } else {
-        setPasswordData(data);
+
+        setLoading(false);
+
+        return;
+      }
+
+      setPasswordData(password);
+
+      // LOAD APP LOGO FROM APP CATALOG
+      const {
+        data: catalogApp,
+        error: catalogError,
+      } = await supabase
+        .from("app_catalog")
+        .select("logo_url")
+        .ilike(
+          "app_name",
+          password.app_name
+        )
+        .maybeSingle();
+
+      if (
+        !catalogError &&
+        catalogApp?.logo_url
+      ) {
+        setLogoUrl(
+          catalogApp.logo_url
+        );
       }
 
       setLoading(false);
+
     } catch (error) {
+      console.log(error);
+
       setLoading(false);
 
       Alert.alert(
         "Error",
-        "Unable to load password."
+        "Unable to load password details."
       );
     }
   };
+
+  // =====================================
+  // DELETE PASSWORD
+  // =====================================
 
   const deletePassword = () => {
     Alert.alert(
@@ -68,6 +124,7 @@ export default function PasswordDetailsScreen() {
           text: "Cancel",
           style: "cancel",
         },
+
         {
           text: "Delete",
           style: "destructive",
@@ -81,7 +138,9 @@ export default function PasswordDetailsScreen() {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      const {
+        error,
+      } = await supabase
         .from("passwords")
         .delete()
         .eq("id", id);
@@ -90,7 +149,7 @@ export default function PasswordDetailsScreen() {
 
       if (error) {
         Alert.alert(
-          "Error",
+          "Delete Failed",
           error.message
         );
 
@@ -98,14 +157,15 @@ export default function PasswordDetailsScreen() {
       }
 
       Alert.alert(
-        "Success",
+        "Deleted",
         "Password deleted successfully."
       );
 
-      router.replace("/(tabs)/dashboard");
+      router.replace(
+        "/(tabs)/dashboard"
+      );
 
     } catch (error) {
-
       setLoading(false);
 
       Alert.alert(
@@ -114,6 +174,10 @@ export default function PasswordDetailsScreen() {
       );
     }
   };
+
+  // =====================================
+  // LOADING SCREEN
+  // =====================================
 
   if (loading) {
     return (
@@ -124,258 +188,542 @@ export default function PasswordDetailsScreen() {
 
         <ActivityIndicator
           size="large"
-          color="#2563EB"
+          color="#064B78"
         />
 
-        <Text style={styles.loadingText}>
-          Loading...
+        <Text
+          style={styles.loadingText}
+        >
+          Loading details...
         </Text>
       </SafeAreaView>
     );
   }
 
+  // =====================================
+  // MAIN SCREEN
+  // =====================================
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-            <TouchableOpacity
-        onPress={() => router.back()}
+    <SafeAreaView
+      style={styles.container}
+    >
+      <StatusBar style="light" />
+
+      <ScrollView
+        showsVerticalScrollIndicator={
+          false
+        }
+        contentContainerStyle={
+          styles.scrollContent
+        }
       >
-        <Text style={styles.back}>
-          ← Back
+
+        {/* TOP SPACE */}
+
+        <View
+          style={styles.topSpace}
+        />
+
+        {/* APP HEADER */}
+
+        <View
+          style={styles.appHeader}
+        >
+
+          {/* LOGO BOX */}
+
+          <View
+            style={styles.logoContainer}
+          >
+
+            {logoUrl ? (
+
+              <Image
+                source={{
+                  uri: logoUrl,
+                }}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+
+            ) : (
+
+              <View
+                style={styles.defaultLogo}
+              >
+
+                <Text
+                  style={
+                    styles.defaultLogoText
+                  }
+                >
+                  {passwordData?.app_name
+                    ?.charAt(0)
+                    ?.toUpperCase()}
+                </Text>
+
+              </View>
+
+            )}
+
+          </View>
+
+          {/* APP NAME */}
+
+          <View
+            style={styles.appTitleContainer}
+          >
+
+            <Text
+              style={styles.appName}
+            >
+              {passwordData?.app_name}
+            </Text>
+
+            <Text
+              style={styles.appSubtitle}
+            >
+              Account Details
+            </Text>
+
+          </View>
+
+        </View>
+
+        {/* ACCOUNT INFORMATION */}
+
+        <Text
+          style={styles.sectionTitle}
+        >
+          ACCOUNT INFORMATION
         </Text>
-      </TouchableOpacity>
 
-      <Text style={styles.title}>
-        🔐 Password Details
-      </Text>
+        {/* USERNAME */}
 
-      {/* App Name */}
+        <View
+          style={styles.infoCard}
+        >
 
-      <View style={styles.card}>
+          <Text
+            style={styles.infoLabel}
+          >
+            Username
+          </Text>
 
-        <Text style={styles.label}>
-          🏷 App / Website
-        </Text>
+          <Text
+            style={styles.infoValue}
+          >
+            {passwordData?.username ||
+              "Not Available"}
+          </Text>
 
-        <Text style={styles.value}>
-          {passwordData?.app_name}
-        </Text>
+        </View>
 
-      </View>
+        {/* EMAIL */}
 
-      {/* Username */}
+        <View
+          style={styles.infoCard}
+        >
 
-      <View style={styles.card}>
+          <Text
+            style={styles.infoLabel}
+          >
+            Email
+          </Text>
 
-        <Text style={styles.label}>
-          👤 Username
-        </Text>
+          <Text
+            style={styles.infoValue}
+          >
+            {passwordData?.email ||
+              "Not Available"}
+          </Text>
 
-        <Text style={styles.value}>
-          {passwordData?.username}
-        </Text>
+        </View>
 
-      </View>
+        {/* PASSWORD */}
 
-      {/* Email */}
+        <View
+          style={styles.infoCard}
+        >
 
-      <View style={styles.card}>
+          <View
+            style={styles.passwordHeader}
+          >
 
-        <Text style={styles.label}>
-          📧 Email
-        </Text>
+            <Text
+              style={styles.infoLabel}
+            >
+              Password
+            </Text>
 
-        <Text style={styles.value}>
-          {passwordData?.email || "Not Available"}
-        </Text>
+            <TouchableOpacity
+              onPress={() =>
+                setHidePassword(
+                  !hidePassword
+                )
+              }
+            >
 
-      </View>
+              <Ionicons
+                name={
+                  hidePassword
+                    ? "eye-outline"
+                    : "eye-off-outline"
+                }
+                size={22}
+                color="#064B78"
+              />
 
-      {/* Password */}
+            </TouchableOpacity>
 
-      <View style={styles.card}>
+          </View>
 
-        <Text style={styles.label}>
-          🔒 Password
-        </Text>
-
-        <View style={styles.passwordRow}>
-
-          <Text style={styles.value}>
+          <Text
+            style={styles.infoValue}
+          >
             {hidePassword
               ? "••••••••••••"
               : passwordData?.password}
           </Text>
 
-          <TouchableOpacity
-            onPress={() =>
-              setHidePassword(!hidePassword)
-            }
+        </View>
+
+        {/* WEBSITE */}
+
+        <View
+          style={styles.infoCard}
+        >
+
+          <Text
+            style={styles.infoLabel}
           >
-            <Text style={styles.eye}>
-              {hidePassword ? "👁" : "🙈"}
-            </Text>
-          </TouchableOpacity>
+            Website
+          </Text>
+
+          <Text
+            style={styles.websiteValue}
+          >
+            {passwordData?.website ||
+              "Not Available"}
+          </Text>
 
         </View>
 
-      </View>
+        {/* CATEGORY */}
 
-      {/* Website */}
+        <View
+          style={styles.infoCard}
+        >
 
-      <View style={styles.card}>
+          <Text
+            style={styles.infoLabel}
+          >
+            Category
+          </Text>
 
-        <Text style={styles.label}>
-          🌐 Website
+          <Text
+            style={styles.infoValue}
+          >
+            {passwordData?.category ||
+              "Not Available"}
+          </Text>
+
+        </View>
+
+        {/* ACTIONS */}
+
+        <Text
+          style={[
+            styles.sectionTitle,
+            styles.actionsTitle,
+          ]}
+        >
+          ACTIONS
         </Text>
 
-        <Text style={styles.value}>
-          {passwordData?.website || "Not Available"}
-        </Text>
+        {/* EDIT BUTTON */}
 
-      </View>
+        <TouchableOpacity
+          style={styles.editButton}
+          activeOpacity={0.8}
+          onPress={() =>
+            router.push({
+              pathname:
+                "/password/edit",
+              params: {
+                id: passwordData?.id,
+              },
+            })
+          }
+        >
 
-      {/* Category */}
+          <Text
+            style={styles.editButtonText}
+          >
+            Edit Password
+          </Text>
 
-      <View style={styles.card}>
+        </TouchableOpacity>
 
-        <Text style={styles.label}>
-          📂 Category
-        </Text>
+        {/* DELETE BUTTON */}
 
-        <Text style={styles.value}>
-          {passwordData?.category}
-        </Text>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          activeOpacity={0.8}
+          onPress={deletePassword}
+        >
 
-      </View>
+          <Text
+            style={styles.deleteButtonText}
+          >
+            Delete Password
+          </Text>
 
-      {/* Edit Button */}
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() =>
-          router.push({
-            pathname: "/password/edit",
-            params: {
-              id: passwordData?.id,
-            },
-          })
-        }
-      >
-        <Text style={styles.editText}>
-          ✏️ Edit Password
-        </Text>
-      </TouchableOpacity>
-
-      {/* Delete Button */}
-
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={deletePassword}
-      >
-        <Text style={styles.deleteText}>
-          🗑 Delete Password
-        </Text>
-      </TouchableOpacity>
+      </ScrollView>
 
     </SafeAreaView>
   );
 }
+
+// =====================================
+// STYLES
+// =====================================
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
-    padding: 20,
-    paddingTop: 30,
+    backgroundColor: "#FAFAF9",
+  },
+
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 45,
+  },
+
+  topSpace: {
+    height: 35,
   },
 
   loadingContainer: {
     flex: 1,
+    backgroundColor: "#FAFAF9",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
   },
 
   loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    color: "#666",
+    marginTop: 14,
+    fontSize: 15,
+    color: "#78716C",
   },
 
-  back: {
-    fontSize: 16,
-    color: "#2563EB",
-    fontWeight: "600",
-    marginBottom: 20,
+  // =====================================
+  // APP HEADER
+  // =====================================
+
+  appHeader: {
+    backgroundColor: "#064B78",
+    borderRadius: 24,
+    padding: 22,
+    flexDirection: "row",
+    alignItems: "center",
+
+    marginTop: 20,
+    marginBottom: 32,
+
+    shadowColor: "#064B78",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+
+    elevation: 5,
   },
 
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#2563EB",
-    marginBottom: 25,
-  },
+  // =====================================
+  // WHITE LOGO BOX
+  // =====================================
 
-  card: {
+  logoContainer: {
+    width: 76,
+    height: 76,
+    borderRadius: 20,
+
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    overflow: "hidden",
+
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+
+  logo: {
+    width: 60,
+    height: 60,
+  },
+
+  defaultLogo: {
+    width: 76,
+    height: 76,
+
+    backgroundColor: "#FFFFFF",
+
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  defaultLogoText: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#064B78",
+  },
+
+  // =====================================
+  // APP NAME
+  // =====================================
+
+  appTitleContainer: {
+    marginLeft: 18,
+    flex: 1,
+  },
+
+  appName: {
+    fontSize: 25,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+
+  appSubtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#D7E8F2",
+    fontWeight: "500",
+  },
+
+  // =====================================
+  // SECTION
+  // =====================================
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    color: "#57534E",
+    marginBottom: 14,
+  },
+
+  actionsTitle: {
+    marginTop: 18,
+  },
+
+  // =====================================
+  // INFORMATION CARDS
+  // =====================================
+
+  infoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     padding: 18,
-    marginBottom: 16,
+    marginBottom: 13,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+
     elevation: 2,
   },
 
-  label: {
+  infoLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#78716C",
+    marginBottom: 8,
+  },
+
+  infoValue: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#292524",
+  },
+
+  websiteValue: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#666",
-    marginBottom: 10,
+    color: "#064B78",
   },
 
-  value: {
-    fontSize: 18,
-    color: "#222",
-    fontWeight: "600",
-  },
-
-  passwordRow: {
+  passwordHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
-  eye: {
-    fontSize: 22,
-  },
+  // =====================================
+  // EDIT BUTTON
+  // =====================================
 
   editButton: {
-    backgroundColor: "#2563EB",
-    height: 55,
-    borderRadius: 14,
+    height: 58,
+    borderRadius: 17,
+
+    backgroundColor: "#064B78",
+
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    elevation: 3,
+
+    marginBottom: 14,
+
+    shadowColor: "#064B78",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+
+    elevation: 5,
   },
 
-  editText: {
+  editButtonText: {
     color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 17,
+    fontWeight: "800",
   },
+
+  // =====================================
+  // DELETE BUTTON
+  // =====================================
 
   deleteButton: {
-    backgroundColor: "#EF4444",
-    height: 55,
-    borderRadius: 14,
+    height: 58,
+    borderRadius: 17,
+
+    backgroundColor: "#FEF2F2",
+
+    borderWidth: 1,
+    borderColor: "#FECACA",
+
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 15,
-    elevation: 3,
   },
 
-  deleteText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
+  deleteButtonText: {
+    color: "#DC2626",
+    fontSize: 17,
+    fontWeight: "800",
   },
+
 });
