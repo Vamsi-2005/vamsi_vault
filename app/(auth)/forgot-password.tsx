@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   SafeAreaView,
   View,
@@ -12,7 +13,9 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { supabase } from "../../services/supabase";
 
@@ -20,12 +23,17 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // =====================================
+  // RESET PASSWORD
+  // =====================================
+
   const resetPassword = async () => {
     if (!email.trim()) {
       Alert.alert(
         "Email Required",
         "Please enter your registered email address."
       );
+
       return;
     }
 
@@ -47,6 +55,7 @@ export default function ForgotPasswordScreen() {
           "Reset Failed",
           error.message
         );
+
         return;
       }
 
@@ -69,6 +78,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <StatusBar style="dark" />
 
       <KeyboardAvoidingView
@@ -86,24 +96,14 @@ export default function ForgotPasswordScreen() {
           showsVerticalScrollIndicator={false}
         >
 
-          {/* Header */}
+          {/* =====================================
+              HEADER
+          ===================================== */}
+
           <View style={styles.header}>
 
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>
-                🔐
-              </Text>
-            </View>
-
             <Text style={styles.title}>
-              Reset Your{" "}
-              <Text style={styles.titleAccent}>
-                Password
-              </Text>
-            </Text>
-
-            <Text style={styles.subtitle}>
-              No worries, it happens.
+              Reset Your Password
             </Text>
 
             <Text style={styles.description}>
@@ -114,17 +114,24 @@ export default function ForgotPasswordScreen() {
 
           </View>
 
-          {/* Form */}
+          {/* =====================================
+              FORM
+          ===================================== */}
+
           <View style={styles.form}>
+
+            {/* EMAIL LABEL */}
 
             <Text style={styles.label}>
               Email Address
             </Text>
 
+            {/* EMAIL INPUT */}
+
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#94A3B8"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -132,52 +139,74 @@ export default function ForgotPasswordScreen() {
               onChangeText={setEmail}
             />
 
-            {/* Send Reset Link */}
+            {/* =====================================
+                SEND RESET LINK
+            ===================================== */}
+
             <TouchableOpacity
               style={[
-                styles.button,
-                loading && styles.buttonDisabled,
+                styles.resetButton,
+                loading && styles.disabledButton,
               ]}
               onPress={resetPassword}
               disabled={loading}
+              activeOpacity={0.85}
             >
 
               {loading ? (
+
                 <ActivityIndicator
                   color="#FFFFFF"
                   size="small"
                 />
+
               ) : (
-                <Text style={styles.buttonText}>
+
+                <Text style={styles.resetButtonText}>
                   SEND RESET LINK
                 </Text>
+
               )}
+
+            </TouchableOpacity>
+
+            {/* =====================================
+                BACK TO LOGIN
+            ===================================== */}
+
+            <TouchableOpacity
+              style={styles.backLoginButton}
+              onPress={() =>
+                router.replace(
+                  "/(auth)/login"
+                )
+              }
+              activeOpacity={0.8}
+            >
+
+              <Ionicons
+                name="arrow-back"
+                size={20}
+                color="#064B78"
+              />
+
+              <Text style={styles.backLoginText}>
+                BACK TO LOGIN
+              </Text>
 
             </TouchableOpacity>
 
           </View>
 
-          {/* Back to Login Button */}
-          <TouchableOpacity
-            style={styles.backLoginButton}
-            onPress={() =>
-              router.replace("/(auth)/login")
-            }
-          >
-            <Text style={styles.backArrow}>
-              ←
-            </Text>
+          {/* =====================================
+              BRANDING
+          ===================================== */}
 
-            <Text style={styles.backLoginText}>
-              BACK TO LOGIN
-            </Text>
-          </TouchableOpacity>
-
-          {/* Branding */}
           <View style={styles.branding}>
 
             <Text style={styles.brandName}>
               Vamsi{" "}
+
               <Text style={styles.brandAccent}>
                 Vault
               </Text>
@@ -192,15 +221,24 @@ export default function ForgotPasswordScreen() {
         </ScrollView>
 
       </KeyboardAvoidingView>
+
     </SafeAreaView>
   );
 }
 
+// =====================================
+// STYLES
+// =====================================
+
 const styles = StyleSheet.create({
+
+  // =====================================
+  // CONTAINER
+  // =====================================
 
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FAFC",
   },
 
   keyboardView: {
@@ -209,151 +247,205 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 28,
-    paddingTop: 55,
+
+    paddingHorizontal: 24,
+
+    paddingTop: 64,
+
     paddingBottom: 30,
+
     justifyContent: "center",
   },
+
+  // =====================================
+  // HEADER
+  // =====================================
 
   header: {
     alignItems: "center",
-  },
 
-  iconContainer: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    backgroundColor: "#F1F7FB",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-
-  icon: {
-    fontSize: 48,
+    marginBottom: 40,
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: "#123B63",
+    fontSize: 30,
+
+    fontWeight: "800",
+
+    color: "#064B78",
+
     textAlign: "center",
-    letterSpacing: 0.3,
-  },
 
-  titleAccent: {
-    color: "#D89B24",
-  },
-
-  subtitle: {
-    marginTop: 14,
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#526579",
+    marginBottom: 16,
   },
 
   description: {
-    marginTop: 10,
+    fontSize: 14,
+
+    lineHeight: 22,
+
+    color: "#94A3B8",
+
     textAlign: "center",
-    fontSize: 15,
-    lineHeight: 23,
-    color: "#7A8491",
   },
 
+  // =====================================
+  // FORM
+  // =====================================
+
   form: {
-    marginTop: 42,
+    width: "100%",
   },
 
   label: {
     fontSize: 14,
+
     fontWeight: "700",
-    color: "#374151",
+
+    color: "#334155",
+
     marginBottom: 9,
+
+    marginLeft: 4,
   },
 
   input: {
-    height: 58,
+    width: "100%",
+
+    height: 64,
+
+    backgroundColor: "#FFFFFF",
+
     borderWidth: 1,
-    borderColor: "#D8E0E8",
-    borderRadius: 14,
-    paddingHorizontal: 18,
+
+    borderColor: "#E2E8F0",
+
+    borderRadius: 9,
+
+    paddingHorizontal: 20,
+
     fontSize: 16,
-    color: "#123B63",
-    backgroundColor: "#F8FAFC",
-  },
 
-  button: {
-    height: 58,
-    backgroundColor: "#064B78",
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
+    color: "#334155",
 
-    elevation: 5,
+    shadowColor: "#000",
 
-    shadowColor: "#064B78",
     shadowOffset: {
       width: 0,
-      height: 4,
+
+      height: 2,
     },
-    shadowOpacity: 0.22,
-    shadowRadius: 6,
+
+    shadowOpacity: 0.04,
+
+    shadowRadius: 5,
+
+    elevation: 1,
   },
 
-  buttonDisabled: {
+  // =====================================
+  // SEND RESET LINK BUTTON
+  // =====================================
+
+  resetButton: {
+    width: "100%",
+
+    height: 64,
+
+    backgroundColor: "#064B78",
+
+    borderRadius: 9,
+
+    justifyContent: "center",
+
+    alignItems: "center",
+
+    marginTop: 24,
+
+    shadowColor: "#064B78",
+
+    shadowOffset: {
+      width: 0,
+
+      height: 5,
+    },
+
+    shadowOpacity: 0.2,
+
+    shadowRadius: 8,
+
+    elevation: 4,
+  },
+
+  disabledButton: {
     opacity: 0.7,
   },
 
-  buttonText: {
+  resetButtonText: {
     color: "#FFFFFF",
-    fontSize: 15,
+
+    fontSize: 14,
+
     fontWeight: "800",
+
     letterSpacing: 1,
   },
 
-  /*
-   * BACK TO LOGIN BUTTON
-   */
+  // =====================================
+  // BACK TO LOGIN BUTTON
+  // =====================================
 
   backLoginButton: {
-    height: 54,
-    borderRadius: 14,
-    backgroundColor: "#EAF2F8",
+    width: "100%",
+
+    height: 64,
+
+    backgroundColor: "#EFF6FF",
+
     borderWidth: 1,
-    borderColor: "#B8D0E2",
+
+    borderColor: "#DBEAFE",
+
+    borderRadius: 9,
 
     flexDirection: "row",
+
     justifyContent: "center",
+
     alignItems: "center",
 
     marginTop: 24,
   },
 
-  backArrow: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#064B78",
-    marginRight: 10,
-    lineHeight: 30,
-  },
-
   backLoginText: {
-    fontSize: 15,
-    fontWeight: "900",
+    marginLeft: 10,
+
     color: "#064B78",
+
+    fontSize: 14,
+
+    fontWeight: "800",
+
     letterSpacing: 0.8,
   },
 
+  // =====================================
+  // BRANDING
+  // =====================================
+
   branding: {
     alignItems: "center",
-    marginTop: 55,
+
+    marginTop: 70,
   },
 
   brandName: {
     fontSize: 22,
+
     fontWeight: "900",
+
     color: "#123B63",
+
     letterSpacing: 0.5,
   },
 
@@ -363,8 +455,11 @@ const styles = StyleSheet.create({
 
   brandSubtitle: {
     marginTop: 7,
+
     fontSize: 12,
+
     color: "#A5ADB7",
+
     letterSpacing: 0.5,
   },
 

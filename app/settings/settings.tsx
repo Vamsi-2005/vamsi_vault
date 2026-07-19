@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   SafeAreaView,
   ScrollView,
@@ -12,7 +13,6 @@ import {
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../services/supabase";
 
@@ -25,6 +25,10 @@ export default function SettingsScreen() {
     useState(true);
 
   const [loading, setLoading] = useState(false);
+
+  // =====================================
+  // CHANGE PASSWORD
+  // =====================================
 
   const changePassword = async () => {
     if (!newPassword.trim()) {
@@ -97,6 +101,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <StatusBar style="dark" />
 
       <ScrollView
@@ -104,13 +109,12 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
 
-        {/* TOP SPACE */}
-
-        <View style={styles.topSpace} />
-
-        {/* HEADER */}
+        {/* =====================================
+            PAGE HEADER
+        ===================================== */}
 
         <View style={styles.header}>
+
           <Text style={styles.title}>
             Change Password
           </Text>
@@ -118,22 +122,21 @@ export default function SettingsScreen() {
           <Text style={styles.subtitle}>
             Update your password to keep your account secure.
           </Text>
+
         </View>
 
-        {/* PASSWORD SECTION */}
+        {/* =====================================
+            MAIN PASSWORD CARD
+        ===================================== */}
 
         <View style={styles.passwordCard}>
 
+          {/* CARD HEADER */}
+
           <View style={styles.cardHeader}>
-            <View style={styles.iconBox}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={24}
-                color="#064B78"
-              />
-            </View>
 
             <View>
+
               <Text style={styles.cardTitle}>
                 New Password
               </Text>
@@ -141,106 +144,131 @@ export default function SettingsScreen() {
               <Text style={styles.cardSubtitle}>
                 Create a strong password
               </Text>
+
             </View>
+
           </View>
 
-          {/* NEW PASSWORD */}
+          {/* =====================================
+              NEW PASSWORD
+          ===================================== */}
 
-          <Text style={styles.label}>
-            New Password
-          </Text>
+          <View style={styles.inputGroup}>
 
-          <View style={styles.inputContainer}>
+            <Text style={styles.label}>
+              New Password
+            </Text>
 
-            <Ionicons
-              name="key-outline"
-              size={21}
-              color="#064B78"
-            />
+            <View style={styles.inputContainer}>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Enter new password"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry={hideNewPassword}
-              value={newPassword}
-              onChangeText={setNewPassword}
-            />
-
-            <TouchableOpacity
-              onPress={() =>
-                setHideNewPassword(
-                  !hideNewPassword
-                )
-              }
-            >
               <Ionicons
-                name={
-                  hideNewPassword
-                    ? "eye-outline"
-                    : "eye-off-outline"
-                }
-                size={23}
-                color="#6B7280"
+                name="key-outline"
+                size={21}
+                color="#334155"
               />
-            </TouchableOpacity>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter new password"
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={hideNewPassword}
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+
+              <TouchableOpacity
+                onPress={() =>
+                  setHideNewPassword(
+                    !hideNewPassword
+                  )
+                }
+                style={styles.eyeButton}
+              >
+
+                <Ionicons
+                  name={
+                    hideNewPassword
+                      ? "eye-outline"
+                      : "eye-off-outline"
+                  }
+                  size={22}
+                  color="#94A3B8"
+                />
+
+              </TouchableOpacity>
+
+            </View>
 
           </View>
 
-          {/* CONFIRM PASSWORD */}
+          {/* =====================================
+              CONFIRM PASSWORD
+          ===================================== */}
 
-          <Text style={styles.label}>
-            Confirm Password
-          </Text>
+          <View style={styles.inputGroup}>
 
-          <View style={styles.inputContainer}>
+            <Text style={styles.label}>
+              Confirm Password
+            </Text>
 
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={21}
-              color="#064B78"
-            />
+            <View style={styles.inputContainer}>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm new password"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry={
-                hideConfirmPassword
-              }
-              value={confirmPassword}
-              onChangeText={
-                setConfirmPassword
-              }
-            />
-
-            <TouchableOpacity
-              onPress={() =>
-                setHideConfirmPassword(
-                  !hideConfirmPassword
-                )
-              }
-            >
               <Ionicons
-                name={
+                name="checkmark-circle-outline"
+                size={21}
+                color="#334155"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm new password"
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={
                   hideConfirmPassword
-                    ? "eye-outline"
-                    : "eye-off-outline"
                 }
-                size={23}
-                color="#6B7280"
+                value={confirmPassword}
+                onChangeText={
+                  setConfirmPassword
+                }
               />
-            </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  setHideConfirmPassword(
+                    !hideConfirmPassword
+                  )
+                }
+                style={styles.eyeButton}
+              >
+
+                <Ionicons
+                  name={
+                    hideConfirmPassword
+                      ? "eye-outline"
+                      : "eye-off-outline"
+                  }
+                  size={22}
+                  color="#94A3B8"
+                />
+
+              </TouchableOpacity>
+
+            </View>
 
           </View>
 
-          {/* CHANGE BUTTON */}
+          {/* =====================================
+              CHANGE PASSWORD BUTTON
+          ===================================== */}
 
           <TouchableOpacity
-            style={styles.button}
+            style={[
+              styles.changeButton,
+              loading && styles.disabledButton,
+            ]}
             onPress={changePassword}
             disabled={loading}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
 
             {loading ? (
@@ -252,6 +280,7 @@ export default function SettingsScreen() {
             ) : (
 
               <>
+
                 <Ionicons
                   name="lock-closed-outline"
                   size={21}
@@ -261,6 +290,7 @@ export default function SettingsScreen() {
                 <Text style={styles.buttonText}>
                   Change Password
                 </Text>
+
               </>
 
             )}
@@ -269,15 +299,21 @@ export default function SettingsScreen() {
 
         </View>
 
-        {/* APP VERSION */}
+        {/* =====================================
+            FOOTER BRANDING
+        ===================================== */}
 
         <View style={styles.versionCard}>
 
-          <Ionicons
-            name="shield-checkmark-outline"
-            size={25}
-            color="#064B78"
-          />
+          <View style={styles.footerIconBox}>
+
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={25}
+              color="#2563EB"
+            />
+
+          </View>
 
           <View style={styles.versionTextContainer}>
 
@@ -294,125 +330,169 @@ export default function SettingsScreen() {
         </View>
 
       </ScrollView>
+
     </SafeAreaView>
   );
 }
+
+
+// =====================================
+// STYLES
+// =====================================
 
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F4F8FB",
+    backgroundColor: "#F8FAFC",
   },
 
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 45,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 160,
   },
 
-  topSpace: {
-    height: 55,
-  },
+  // =====================================
+  // HEADER
+  // =====================================
 
   header: {
-    marginBottom: 28,
+    marginBottom: 30,
   },
 
   title: {
     fontSize: 30,
-    fontWeight: "900",
-    color: "#123047",
-    letterSpacing: 0.3,
+    fontWeight: "800",
+    color: "#1E3A5F",
+    marginBottom: 8,
   },
 
   subtitle: {
-    fontSize: 15,
-    color: "#6B7280",
-    marginTop: 8,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#64748B",
   },
+
+  // =====================================
+  // PASSWORD CARD
+  // =====================================
 
   passwordCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 10,
+    padding: 28,
+
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
 
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
 
-    elevation: 3,
+    elevation: 2,
   },
 
+  // =====================================
+  // CARD HEADER
+  // =====================================
+
   cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
+   alignItems: "center",
+   justifyContent:"center",
+    marginBottom: 30,
   },
 
   iconBox: {
-    width: 52,
-    height: 52,
+    width: 58,
+    height: 58,
     borderRadius: 16,
-    backgroundColor: "#E8F2F8",
+    backgroundColor: "#EFF6FF",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 14,
+    marginRight: 16,
   },
 
   cardTitle: {
-    fontSize: 19,
+    fontSize: 30,
     fontWeight: "800",
-    color: "#123047",
+    color: "#0F172A",
+    textAlign: "center",
   },
 
   cardSubtitle: {
-    fontSize: 13,
-    color: "#7B8790",
-    marginTop: 4,
+    fontSize: 16,
+    color: "#94A3B8",
+    marginTop: 6,
+    textAlign: "center"
+  },
+
+  // =====================================
+  // INPUT GROUP
+  // =====================================
+
+  inputGroup: {
+    marginBottom: 22,
   },
 
   label: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#374151",
+    color: "#1E293B",
     marginBottom: 8,
-    marginTop: 14,
+    paddingHorizontal: 2,
   },
 
   inputContainer: {
     height: 58,
-    borderWidth: 1,
-    borderColor: "#DCE5EA",
-    borderRadius: 16,
-    backgroundColor: "#FAFCFD",
     flexDirection: "row",
     alignItems: "center",
+
+    backgroundColor: "#FFFFFF",
+
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+
+    borderRadius: 7,
+
     paddingHorizontal: 15,
   },
 
   input: {
     flex: 1,
-    marginLeft: 11,
-    marginRight: 10,
-    fontSize: 16,
-    color: "#1F2937",
+    marginLeft: 12,
+    marginRight: 8,
+
+    fontSize: 15,
+    color: "#334155",
   },
 
-  button: {
-    height: 59,
-    borderRadius: 17,
+  eyeButton: {
+    padding: 3,
+  },
+
+  // =====================================
+  // CHANGE PASSWORD BUTTON
+  // =====================================
+
+  changeButton: {
+    height: 62,
+
+    marginTop: 6,
+
     backgroundColor: "#064B78",
-    marginTop: 28,
+
+    borderRadius: 7,
+
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
 
-    shadowColor: "#064B78",
+    shadowColor: "#1E3A8A",
     shadowOffset: {
       width: 0,
       height: 5,
@@ -423,46 +503,71 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
+  disabledButton: {
+    opacity: 0.7,
+  },
+
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "700",
     marginLeft: 9,
   },
 
+  // =====================================
+  // FOOTER BRANDING
+  // =====================================
+
   versionCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 18,
+
+    borderRadius: 10,
+
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+
+    padding: 20,
+
     marginTop: 24,
+
     flexDirection: "row",
     alignItems: "center",
 
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 2,
     },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
 
-    elevation: 2,
+    elevation: 1,
+  },
+
+  footerIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   versionTextContainer: {
-    marginLeft: 13,
+    marginLeft: 14,
   },
 
   versionTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#123047",
+    color: "#1E293B",
   },
 
   versionText: {
-    fontSize: 13,
-    color: "#7B8790",
-    marginTop: 3,
+    fontSize: 12,
+    color: "#94A3B8",
+    marginTop: 4,
   },
 
 });
+

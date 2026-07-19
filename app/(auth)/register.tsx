@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   SafeAreaView,
   View,
@@ -10,9 +11,12 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../services/supabase";
 
 export default function RegisterScreen() {
@@ -28,7 +32,12 @@ export default function RegisterScreen() {
   const [hideConfirmPassword, setHideConfirmPassword] =
     useState(true);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
+
+  // =====================================
+  // REGISTER USER
+  // =====================================
 
   const register = async () => {
     if (!name.trim()) {
@@ -86,8 +95,11 @@ export default function RegisterScreen() {
         await supabase.auth.signUp({
           email: email.trim(),
           password: password,
+
           options: {
-            emailRedirectTo: "vamsivault://",
+            emailRedirectTo:
+              "vamsivault://",
+
             data: {
               full_name: name.trim(),
             },
@@ -97,13 +109,12 @@ export default function RegisterScreen() {
       setLoading(false);
 
       if (error) {
+        const errorMessage =
+          error.message.toLowerCase();
+
         if (
-          error.message
-            .toLowerCase()
-            .includes("already") ||
-          error.message
-            .toLowerCase()
-            .includes("registered")
+          errorMessage.includes("already") ||
+          errorMessage.includes("registered")
         ) {
           Alert.alert(
             "Account Exists",
@@ -126,7 +137,9 @@ export default function RegisterScreen() {
         "Your account has been created successfully.\n\nA verification email has been sent to your email address.\n\nPlease verify your email first, then login."
       );
 
-      router.replace("/(auth)/login");
+      router.replace(
+        "/(auth)/login"
+      );
 
     } catch (error) {
       setLoading(false);
@@ -139,7 +152,10 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+    >
+
       <StatusBar style="dark" />
 
       <KeyboardAvoidingView
@@ -151,336 +167,488 @@ export default function RegisterScreen() {
         }
       >
 
-        {/* Header */}
+        <ScrollView
+          contentContainerStyle={
+            styles.scrollContent
+          }
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
 
-        <View style={styles.header}>
+          {/* =====================================
+              HEADER
+          ===================================== */}
 
-          <Text style={styles.title}>
-            Create{" "}
-            <Text style={styles.titleAccent}>
-              Account
-            </Text>
-          </Text>
+          <View
+            style={styles.header}
+          >
 
-          <Text style={styles.subtitle}>
-            Join Vamsi Vault today and secure your passwords
-          </Text>
-
-        </View>
-
-        {/* Form */}
-
-        <View style={styles.form}>
-
-          {/* Full Name */}
-
-          <View style={styles.inputGroup}>
-
-            <Text style={styles.label}>
-              Full Name
+            <Text
+              style={styles.title}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              Create Account
             </Text>
 
-            <View style={styles.inputWrapper}>
-
-              <Text style={styles.inputIcon}>
-                👤
-              </Text>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your full name"
-                placeholderTextColor="#9CA3AF"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-              />
-
-            </View>
+            <Text
+              style={styles.subtitle}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              Join Vamsi Vault today and secure your passwords
+            </Text>
 
           </View>
 
-          {/* Email */}
+          {/* =====================================
+              REGISTER CARD
+          ===================================== */}
 
-          <View style={styles.inputGroup}>
+          <View
+            style={styles.formCard}
+          >
 
-            <Text style={styles.label}>
-              Email Address
-            </Text>
+            {/* FULL NAME */}
 
-            <View style={styles.inputWrapper}>
+            <View
+              style={styles.inputGroup}
+            >
 
-              <Text style={styles.inputIcon}>
-                ✉️
+              <Text
+                style={styles.label}
+              >
+                FULL NAME
               </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={email}
-                onChangeText={setEmail}
-              />
+              <View
+                style={styles.inputWrapper}
+              >
+
+                <Ionicons
+                  name="person-outline"
+                  size={21}
+                  color="#727780"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="John Doe"
+                  placeholderTextColor="#9CA3AF"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+
+              </View>
 
             </View>
 
-          </View>
+            {/* EMAIL */}
 
-          {/* Password */}
+            <View
+              style={styles.inputGroup}
+            >
 
-          <View style={styles.inputGroup}>
-
-            <Text style={styles.label}>
-              Password
-            </Text>
-
-            <View style={styles.inputWrapper}>
-
-              <Text style={styles.inputIcon}>
-                🔑
+              <Text
+                style={styles.label}
+              >
+                EMAIL ADDRESS
               </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Create a password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry={hidePassword}
-                value={password}
-                onChangeText={setPassword}
-              />
+              <View
+                style={styles.inputWrapper}
+              >
+
+                <Ionicons
+                  name="mail-outline"
+                  size={21}
+                  color="#727780"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="name@company.com"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+
+              </View>
+
+            </View>
+
+            {/* PASSWORD */}
+
+            <View
+              style={styles.inputGroup}
+            >
+
+              <Text
+                style={styles.label}
+              >
+                PASSWORD
+              </Text>
+
+              <View
+                style={styles.inputWrapper}
+              >
+
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={21}
+                  color="#727780"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={
+                    hidePassword
+                  }
+                />
+
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() =>
+                    setHidePassword(
+                      !hidePassword
+                    )
+                  }
+                >
+
+                  <Ionicons
+                    name={
+                      hidePassword
+                        ? "eye-outline"
+                        : "eye-off-outline"
+                    }
+                    size={22}
+                    color="#727780"
+                  />
+
+                </TouchableOpacity>
+
+              </View>
+
+            </View>
+
+            {/* CONFIRM PASSWORD */}
+
+            <View
+              style={styles.inputGroup}
+            >
+
+              <Text
+                style={styles.label}
+              >
+                CONFIRM PASSWORD
+              </Text>
+
+              <View
+                style={styles.inputWrapper}
+              >
+
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={21}
+                  color="#727780"
+                />
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#9CA3AF"
+                  value={confirmPassword}
+                  onChangeText={
+                    setConfirmPassword
+                  }
+                  secureTextEntry={
+                    hideConfirmPassword
+                  }
+                />
+
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() =>
+                    setHideConfirmPassword(
+                      !hideConfirmPassword
+                    )
+                  }
+                >
+
+                  <Ionicons
+                    name={
+                      hideConfirmPassword
+                        ? "eye-outline"
+                        : "eye-off-outline"
+                    }
+                    size={22}
+                    color="#727780"
+                  />
+
+                </TouchableOpacity>
+
+              </View>
+
+            </View>
+
+            {/* CREATE ACCOUNT BUTTON */}
+
+            <TouchableOpacity
+              style={[
+                styles.registerButton,
+                loading &&
+                  styles.disabledButton,
+              ]}
+              onPress={register}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+
+              {loading ? (
+
+                <ActivityIndicator
+                  color="#FFFFFF"
+                />
+
+              ) : (
+
+                <Text
+                  style={
+                    styles.registerButtonText
+                  }
+                >
+                  Create Account
+                </Text>
+
+              )}
+
+            </TouchableOpacity>
+
+            {/* LOGIN */}
+
+            <View
+              style={styles.loginContainer}
+            >
+
+              <Text
+                style={styles.loginQuestion}
+              >
+                Already have an account?
+              </Text>
 
               <TouchableOpacity
-                style={styles.eyeButton}
                 onPress={() =>
-                  setHidePassword(
-                    !hidePassword
+                  router.replace(
+                    "/(auth)/login"
                   )
                 }
               >
-                <Text style={styles.eyeIcon}>
-                  {hidePassword
-                    ? "🙈"
-                    : "👁️"}
+
+                <Text
+                  style={styles.loginText}
+                >
+                  Login
                 </Text>
+
               </TouchableOpacity>
 
             </View>
 
           </View>
 
-          {/* Confirm Password */}
+          {/* =====================================
+              BRANDING
+          ===================================== */}
 
-          <View style={styles.inputGroup}>
+          <View
+            style={styles.branding}
+          >
 
-            <Text style={styles.label}>
-              Confirm Password
-            </Text>
+            <Text
+              style={styles.brandName}
+            >
 
-            <View style={styles.inputWrapper}>
-
-              <Text style={styles.inputIcon}>
-                🔒
+              <Text
+                style={styles.brandVamsi}
+              >
+                Vamsi
               </Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm your password"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry={
-                  hideConfirmPassword
-                }
-                value={confirmPassword}
-                onChangeText={
-                  setConfirmPassword
-                }
-              />
+              {" "}
 
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() =>
-                  setHideConfirmPassword(
-                    !hideConfirmPassword
-                  )
-                }
+              <Text
+                style={styles.brandVault}
               >
-                <Text style={styles.eyeIcon}>
-                  {hideConfirmPassword
-                    ? "🙈"
-                    : "👁️"}
-                </Text>
-              </TouchableOpacity>
+                Vault
+              </Text>
 
-            </View>
+            </Text>
+
+            <Text
+              style={styles.brandSubtitle}
+            >
+              Secure • Private • Protected
+            </Text>
 
           </View>
 
-          {/* Register Button */}
-
-          <TouchableOpacity
-            style={[
-              styles.registerButton,
-              loading &&
-                styles.registerButtonDisabled,
-            ]}
-            onPress={register}
-            disabled={loading}
-          >
-
-            {loading ? (
-              <ActivityIndicator
-                color="#FFFFFF"
-              />
-            ) : (
-              <Text style={styles.registerButtonText}>
-                CREATE ACCOUNT
-              </Text>
-            )}
-
-          </TouchableOpacity>
-
-        </View>
-
-        {/* Login Link - Single Line */}
-
-        <View style={styles.loginContainer}>
-
-          <Text style={styles.loginQuestion}>
-            Already have an account?  {" "}
-          </Text>
-
-          <TouchableOpacity
-            onPress={() =>
-              router.replace(
-                "/(auth)/login"
-              )
-            }
-          >
-            <Text style={styles.loginText}>
-              LOGIN
-            </Text>
-          </TouchableOpacity>
-
-        </View>
-
-        {/* Branding */}
-
-        <View style={styles.branding}>
-
-          <Text style={styles.brandName}>
-            Vamsi{" "}
-            <Text style={styles.brandAccent}>
-              Vault
-            </Text>
-          </Text>
-
-          <Text style={styles.brandSubtitle}>
-            Secure • Private • Protected
-          </Text>
-
-        </View>
+        </ScrollView>
 
       </KeyboardAvoidingView>
+
     </SafeAreaView>
   );
 }
+
+// =====================================
+// STYLES
+// =====================================
 
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F7F9FB",
   },
 
   keyboardView: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingBottom: 24,
-    paddingTop: 130,
   },
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 48,
+    paddingBottom: 20,
+    justifyContent: "center",
+  },
+
+  // =====================================
+  // HEADER
+  // =====================================
 
   header: {
     alignItems: "center",
     marginBottom: 24,
+    paddingHorizontal: 0,
+    width: "100%",
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: "#123B63",
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: "800",
+    color: "#191C1E",
     textAlign: "center",
-  },
-
-  titleAccent: {
-    color: "#D89B24",
+    letterSpacing: -0.5,
+    width: "100%",
   },
 
   subtitle: {
     marginTop: 8,
-    fontSize: 15,
-    color: "#7A8491",
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#41474F",
     textAlign: "center",
-  },
-
-  form: {
     width: "100%",
   },
 
+  // =====================================
+  // FORM CARD
+  // =====================================
+
+  formCard: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 20,
+
+    borderWidth: 1,
+    borderColor: "#E0E3E5",
+
+    shadowColor: "#003456",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+
+    elevation: 3,
+  },
+
+  // =====================================
+  // INPUT GROUP
+  // =====================================
+
   inputGroup: {
-    marginBottom: 12,
+    marginBottom: 18,
   },
 
   label: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#123B63",
-    marginBottom: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.8,
+    fontWeight: "600",
+    color: "#41474F",
+    marginBottom: 8,
   },
 
   inputWrapper: {
-    height: 53,
+    height: 52,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#D7E0E8",
-    borderRadius: 14,
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 14,
-  },
 
-  inputIcon: {
-    fontSize: 18,
-    marginRight: 10,
+    backgroundColor: "#FFFFFF",
+
+    borderWidth: 1,
+    borderColor: "#C1C7D0",
+
+    borderRadius: 9,
+
+    paddingHorizontal: 13,
   },
 
   input: {
     flex: 1,
-    height: "100%",
+    marginLeft: 10,
+
     fontSize: 15,
-    color: "#123B63",
+    color: "#191C1E",
   },
 
   eyeButton: {
     width: 38,
-    height: 40,
+    height: 38,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  eyeIcon: {
-    fontSize: 21,
-  },
+  // =====================================
+  // REGISTER BUTTON
+  // =====================================
 
   registerButton: {
-    height: 55,
+    height: 56,
+    marginTop: 4,
+
     backgroundColor: "#064B78",
-    borderRadius: 14,
+
+    borderRadius: 9,
+
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 8,
 
-    elevation: 5,
+    flexDirection: "row",
+    gap: 8,
 
     shadowColor: "#064B78",
     shadowOffset: {
@@ -488,60 +656,74 @@ const styles = StyleSheet.create({
       height: 4,
     },
     shadowOpacity: 0.22,
-    shadowRadius: 6,
+    shadowRadius: 8,
+
+    elevation: 4,
   },
 
-  registerButtonDisabled: {
+  disabledButton: {
     opacity: 0.7,
   },
 
   registerButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 1,
+    fontSize: 17,
+    fontWeight: "700",
   },
+
+  // =====================================
+  // LOGIN LINK
+  // =====================================
 
   loginContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+
     marginTop: 20,
   },
 
   loginQuestion: {
-    fontSize: 13,
-    color: "#7A8491",
+    fontSize: 14,
+    color: "#41474F",
   },
 
   loginText: {
+    marginLeft: 5,
     fontSize: 14,
-    fontWeight: "900",
-    color: "#2563EB",
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    color: "#064B78",
   },
+
+  // =====================================
+  // BRANDING
+  // =====================================
 
   branding: {
     alignItems: "center",
-    marginTop: "auto",
-    paddingTop: 20,
+    marginTop: 20,
   },
 
+  // Vamsi → #123B63
   brandName: {
-    fontSize: 21,
+    fontSize: 22,
     fontWeight: "900",
+    letterSpacing: 0.5,
+  },
+
+  brandVamsi: {
     color: "#123B63",
   },
 
-  brandAccent: {
+  // Vault → #D89B24
+  brandVault: {
     color: "#D89B24",
   },
 
   brandSubtitle: {
     marginTop: 5,
-    fontSize: 11,
-    color: "#A5ADB7",
-    letterSpacing: 0.4,
+    fontSize: 12,
+    color: "#727780",
   },
 
 });
