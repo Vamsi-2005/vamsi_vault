@@ -27,14 +27,11 @@ import {
 import { supabase } from "../../services/supabase";
 
 export default function DashboardScreen() {
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [refreshing, setRefreshing] =
-    useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [userName, setUserName] =
-    useState("User");
+  const [userName, setUserName] = useState("User");
 
   const [profileImage, setProfileImage] =
     useState<string | null>(null);
@@ -59,28 +56,24 @@ export default function DashboardScreen() {
       color: "#006B5F",
       background: "#D9F5EF",
     },
-
     {
       name: "Social",
       icon: "globe-outline",
       color: "#2B6290",
       background: "#CFE5FF",
     },
-
     {
       name: "Shopping",
       icon: "shopping-bag-outline",
       color: "#6C3A00",
       background: "#FFDEC1",
     },
-
     {
       name: "Banking",
       icon: "business-outline",
       color: "#4E2800",
       background: "#FFE9D8",
     },
-
     {
       name: "Entertainment",
       icon: "game-controller-outline",
@@ -110,8 +103,7 @@ export default function DashboardScreen() {
       const {
         data: { user },
         error: userError,
-      } =
-        await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
 
       if (userError || !user) {
         router.replace("/(auth)/login");
@@ -148,14 +140,13 @@ export default function DashboardScreen() {
       const {
         data: passwordData,
         error: passwordError,
-      } =
-        await supabase
-          .from("passwords")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", {
-            ascending: false,
-          });
+      } = await supabase
+        .from("passwords")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", {
+          ascending: false,
+        });
 
       if (passwordError) {
         console.log(
@@ -164,45 +155,34 @@ export default function DashboardScreen() {
         );
       }
 
-      const allPasswords =
-        passwordData || [];
+      const allPasswords = passwordData || [];
 
       // =====================================
       // TOTAL PASSWORDS
       // =====================================
 
-      setTotalPasswords(
-        allPasswords.length
-      );
+      setTotalPasswords(allPasswords.length);
 
       // =====================================
       // CATEGORY COUNTS
       // =====================================
 
-      const counts: Record<
-        string,
-        number
-      > = {};
+      const counts: Record<string, number> = {};
 
-      categories.forEach(
-        (category) => {
-          counts[category.name] = 0;
+      categories.forEach((category) => {
+        counts[category.name] = 0;
+      });
+
+      allPasswords.forEach((password) => {
+        const category = password.category;
+
+        if (
+          category &&
+          counts[category] !== undefined
+        ) {
+          counts[category] += 1;
         }
-      );
-
-      allPasswords.forEach(
-        (password) => {
-          const category =
-            password.category;
-
-          if (
-            category &&
-            counts[category] !== undefined
-          ) {
-            counts[category] += 1;
-          }
-        }
-      );
+      });
 
       setCategoryCounts(counts);
 
@@ -215,7 +195,6 @@ export default function DashboardScreen() {
       );
 
       setLoading(false);
-
     } catch (error) {
       console.log(
         "Dashboard Error:",
@@ -482,9 +461,7 @@ export default function DashboardScreen() {
 
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={
-              false
-            }
+            showsHorizontalScrollIndicator={false}
             contentContainerStyle={
               styles.categoryScroll
             }
@@ -563,7 +540,7 @@ export default function DashboardScreen() {
           <Text
             style={styles.sectionTitle}
           >
-            Recent Passwords
+            Recent
           </Text>
 
           <TouchableOpacity
@@ -589,8 +566,7 @@ export default function DashboardScreen() {
             PASSWORD LIST
         ===================================== */}
 
-        {recentPasswords.length ===
-        0 ? (
+        {recentPasswords.length === 0 ? (
 
           <View
             style={styles.emptyCard}
@@ -755,13 +731,12 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-
     backgroundColor: "#F7F9FB",
   },
 
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 40,
     paddingBottom: 40,
   },
 
@@ -771,21 +746,15 @@ const styles = StyleSheet.create({
 
   loadingContainer: {
     flex: 1,
-
     justifyContent: "center",
-
     alignItems: "center",
-
     backgroundColor: "#F7F9FB",
   },
 
   loadingText: {
     marginTop: 14,
-
     fontSize: 15,
-
     color: "#41474F",
-
     fontWeight: "600",
   },
 
@@ -795,53 +764,39 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
-
     marginBottom: 26,
   },
 
   headerLeft: {
     flexDirection: "row",
-
     alignItems: "center",
-
     flex: 1,
   },
 
+  // PROFILE IMAGE BOX → RADIUS 9
+
   profileBox: {
     width: 58,
-
     height: 58,
-
-    borderRadius: 16,
-
+    borderRadius: 9,
     overflow: "hidden",
-
     backgroundColor: "#CFE5FF",
-
     justifyContent: "center",
-
     alignItems: "center",
-
     marginRight: 14,
   },
 
   profileImage: {
     width: "100%",
-
     height: "100%",
   },
 
   profilePlaceholder: {
     width: "100%",
-
     height: "100%",
-
     justifyContent: "center",
-
     alignItems: "center",
   },
 
@@ -851,163 +806,117 @@ const styles = StyleSheet.create({
 
   userName: {
     fontSize: 27,
-
     lineHeight: 33,
-
     fontWeight: "800",
-
     color: "#003456",
   },
 
   secureText: {
     fontSize: 13,
-
     lineHeight: 19,
-
     color: "#41474F",
-
     marginTop: 3,
   },
 
+  // SETTINGS / PROFILE BUTTON → RADIUS 9
+
   settingsButton: {
     width: 44,
-
     height: 44,
-
     justifyContent: "center",
-
     alignItems: "center",
-
-    borderRadius: 22,
+    borderRadius: 9,
   },
 
   // =====================================
-  // TOTAL PASSWORD CARD
+  // TOTAL PASSWORD CARD → RADIUS 9
   // =====================================
 
   totalCard: {
     backgroundColor: "#064B78",
-
-    borderRadius: 14,
-
+    borderRadius: 9,
     padding: 20,
-
     overflow: "hidden",
-
     marginBottom: 28,
 
     shadowColor: "#2B6290",
-
     shadowOffset: {
       width: 0,
-
       height: 4,
     },
-
     shadowOpacity: 0.18,
-
     shadowRadius: 12,
-
     elevation: 5,
   },
 
   decorativeLock: {
     position: "absolute",
-
     right: -17,
-
     top: -18,
-
     opacity: 0.08,
   },
 
   totalHeader: {
     flexDirection: "row",
-
     alignItems: "center",
-
     marginBottom: 9,
   },
 
   shieldBox: {
     width: 34,
-
     height: 34,
-
     borderRadius: 9,
-
     backgroundColor:
       "rgba(255,255,255,0.12)",
-
     justifyContent: "center",
-
     alignItems: "center",
-
     marginRight: 10,
   },
 
   totalLabel: {
     fontSize: 12,
-
     fontWeight: "700",
-
     letterSpacing: 1.4,
-
     color: "rgba(255,255,255,0.78)",
   },
 
   totalValueRow: {
     flexDirection: "row",
-
     alignItems: "baseline",
-
     gap: 9,
   },
 
   totalValue: {
     fontSize: 34,
-
     lineHeight: 42,
-
     fontWeight: "800",
-
     color: "#FFFFFF",
   },
 
   protectedText: {
     fontSize: 14,
-
     color: "rgba(255,255,255,0.82)",
   },
 
   securityContainer: {
     marginTop: 16,
-
     paddingTop: 14,
-
     borderTopWidth: 1,
-
     borderTopColor:
       "rgba(255,255,255,0.12)",
-
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
   },
 
   securityText: {
     fontSize: 13,
-
     color: "rgba(255,255,255,0.68)",
   },
 
   excellentText: {
     fontSize: 13,
-
     fontWeight: "700",
-
     color: "#71F8E4",
   },
 
@@ -1021,89 +930,64 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 21,
-
     lineHeight: 28,
-
     fontWeight: "700",
-
     color: "#003456",
-
     marginBottom: 14,
   },
 
   categoryScroll: {
     gap: 10,
-
     paddingRight: 10,
   },
+
+  // CATEGORY CARD → RADIUS 9
 
   categoryCard: {
     width: 100,
     height: 100,
-
     backgroundColor: "#FFFFFF",
-
-    borderRadius: 13,
-
+    borderRadius: 9,
     borderWidth: 1,
-
     borderColor:
       "rgba(193,199,208,0.45)",
-
     justifyContent: "center",
-
     alignItems: "center",
-
     paddingHorizontal: 5,
 
     shadowColor: "#2B6290",
-
     shadowOffset: {
       width: 0,
-
       height: 3,
     },
-
     shadowOpacity: 0.06,
-
     shadowRadius: 8,
-
     elevation: 2,
   },
 
+  // CATEGORY ICON BOX → RADIUS 9
+
   categoryIconBox: {
     width: 38,
-
     height: 38,
-
-    borderRadius: 10,
-
+    borderRadius: 9,
     justifyContent: "center",
-
     alignItems: "center",
-
     marginBottom: 6,
   },
 
   categoryName: {
     fontSize: 12,
-
     fontWeight: "700",
-
     color: "#191C1E",
-
     textAlign: "center",
   },
 
   categoryItems: {
     fontSize: 8,
-
     fontWeight: "600",
-
     letterSpacing: 0.6,
-
     color: "#727780",
-
     marginTop: 3,
   },
 
@@ -1113,212 +997,148 @@ const styles = StyleSheet.create({
 
   recentHeader: {
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
-
     marginBottom: 13,
   },
 
   seeAllText: {
     fontSize: 15,
-
     fontWeight: "700",
-
     color: "#064B78",
-
     paddingVertical: 6,
-
     paddingHorizontal: 4,
   },
 
   // =====================================
-  // PASSWORD CARD
+  // PASSWORD CARD → RADIUS 9
   // =====================================
 
   passwordCard: {
     minHeight: 76,
-
     backgroundColor: "#FFFFFF",
-
-    borderRadius: 14,
-
+    borderRadius: 9,
     paddingHorizontal: 14,
-
     paddingVertical: 12,
-
     marginBottom: 11,
-
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
 
     borderWidth: 1,
-
     borderColor:
       "rgba(193,199,208,0.25)",
 
     shadowColor: "#2B6290",
-
     shadowOffset: {
       width: 0,
-
       height: 4,
     },
-
     shadowOpacity: 0.05,
-
     shadowRadius: 10,
-
     elevation: 2,
   },
 
   passwordLeft: {
     flexDirection: "row",
-
     alignItems: "center",
-
     flex: 1,
-
     minWidth: 0,
   },
 
+  // PASSWORD ICON BOX → RADIUS 9
+
   passwordIconBox: {
     width: 48,
-
     height: 48,
-
-    borderRadius: 12,
-
+    borderRadius: 9,
     backgroundColor: "#F2F4F6",
-
     justifyContent: "center",
-
     alignItems: "center",
-
     marginRight: 12,
   },
 
   passwordInfo: {
     flex: 1,
-
     minWidth: 0,
   },
 
   passwordTitle: {
     fontSize: 16,
-
     fontWeight: "700",
-
     color: "#191C1E",
-
     marginBottom: 3,
   },
 
   passwordEmail: {
     fontSize: 13,
-
     color: "#41474F",
   },
 
   moreButton: {
     width: 36,
-
     height: 40,
-
     justifyContent: "center",
-
     alignItems: "center",
-
     marginLeft: 5,
   },
 
   // =====================================
-  // EMPTY CARD
+  // EMPTY CARD → RADIUS 9
   // =====================================
 
   emptyCard: {
     backgroundColor: "#FFFFFF",
-
-    borderRadius: 14,
-
+    borderRadius: 9,
     padding: 25,
-
     alignItems: "center",
-
     marginBottom: 15,
-
     borderWidth: 1,
-
     borderColor: "#E0E3E5",
   },
 
   emptyTitle: {
     fontSize: 17,
-
     fontWeight: "700",
-
     color: "#191C1E",
-
     marginTop: 10,
-
     marginBottom: 5,
   },
 
   emptySubtitle: {
     fontSize: 14,
-
     color: "#727780",
-
     textAlign: "center",
   },
 
   // =====================================
-  // ADD BUTTON
+  // ADD NEW PASSWORD BUTTON → RADIUS 9
   // =====================================
 
   addButton: {
     height: 58,
-
     backgroundColor: "#064B78",
-
-    borderRadius: 13,
-
+    borderRadius: 9,
     flexDirection: "row",
-
     justifyContent: "center",
-
     alignItems: "center",
-
     gap: 8,
-
     marginTop: 10,
-
     marginBottom: 20,
 
     shadowColor: "#064B78",
-
     shadowOffset: {
       width: 0,
-
       height: 4,
     },
-
     shadowOpacity: 0.2,
-
     shadowRadius: 8,
-
     elevation: 4,
   },
 
   addButtonText: {
     fontSize: 16,
-
     fontWeight: "700",
-
     color: "#FFFFFF",
   },
 

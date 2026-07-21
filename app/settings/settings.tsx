@@ -5,7 +5,6 @@ import {
   ScrollView,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -13,84 +12,66 @@ import {
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
+
+import { router } from "expo-router";
+
 import { Ionicons } from "@expo/vector-icons";
+
 import { supabase } from "../../services/supabase";
 
 export default function SettingsScreen() {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const [hideNewPassword, setHideNewPassword] = useState(true);
-  const [hideConfirmPassword, setHideConfirmPassword] =
+  const [biometricEnabled, setBiometricEnabled] =
     useState(true);
 
-  const [loading, setLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] =
+    useState(false);
 
   // =====================================
-  // CHANGE PASSWORD
+  // LOGOUT
   // =====================================
 
-  const changePassword = async () => {
-    if (!newPassword.trim()) {
-      Alert.alert(
-        "Validation",
-        "Please enter a new password."
-      );
-      return;
-    }
+  const logout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: confirmLogout,
+        },
+      ]
+    );
+  };
 
-    if (newPassword.length < 6) {
-      Alert.alert(
-        "Validation",
-        "Password must be at least 6 characters."
-      );
-      return;
-    }
-
-    if (!confirmPassword.trim()) {
-      Alert.alert(
-        "Validation",
-        "Please confirm your password."
-      );
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      Alert.alert(
-        "Validation",
-        "Passwords do not match."
-      );
-      return;
-    }
-
+  const confirmLogout = async () => {
     try {
-      setLoading(true);
+      setLogoutLoading(true);
 
       const { error } =
-        await supabase.auth.updateUser({
-          password: newPassword,
-        });
-
-      setLoading(false);
+        await supabase.auth.signOut();
 
       if (error) {
+        setLogoutLoading(false);
+
         Alert.alert(
-          "Update Failed",
+          "Logout Failed",
           error.message
         );
+
         return;
       }
 
-      Alert.alert(
-        "Success",
-        "Password updated successfully."
-      );
+      setLogoutLoading(false);
 
-      setNewPassword("");
-      setConfirmPassword("");
+      router.replace("/home");
 
     } catch (error) {
-      setLoading(false);
+      setLogoutLoading(false);
 
       Alert.alert(
         "Error",
@@ -99,233 +80,330 @@ export default function SettingsScreen() {
     }
   };
 
+  // =====================================
+  // SETTINGS ROW
+  // =====================================
+
+  const SettingsRow = ({
+    icon,
+    title,
+    onPress,
+  }: {
+    icon: any;
+    title: string;
+    onPress: () => void;
+  }) => {
+    return (
+      <TouchableOpacity
+        style={styles.row}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+
+        <View style={styles.rowLeft}>
+
+          <View style={styles.iconBox}>
+
+            <Ionicons
+              name={icon}
+              size={22}
+              color="#003456"
+            />
+
+          </View>
+
+          <Text style={styles.rowText}>
+            {title}
+          </Text>
+
+        </View>
+
+        <Ionicons
+          name="chevron-forward"
+          size={22}
+          color="#727780"
+        />
+
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+    >
 
       <StatusBar style="dark" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          styles.scrollContent
+        }
       >
 
         {/* =====================================
-            PAGE HEADER
+            SETTINGS HEADING
         ===================================== */}
 
         <View style={styles.header}>
 
           <Text style={styles.title}>
-            Change Password
-          </Text>
-
-          <Text style={styles.subtitle}>
-            Update your password to keep your account secure.
+            SETTINGS
           </Text>
 
         </View>
 
         {/* =====================================
-            MAIN PASSWORD CARD
+            SECURITY
         ===================================== */}
 
-        <View style={styles.passwordCard}>
+        <Text style={styles.sectionTitle}>
+          SECURITY
+        </Text>
 
-          {/* CARD HEADER */}
+        <View style={styles.card}>
 
-          <View style={styles.cardHeader}>
+          {/* CHANGE PASSWORD */}
 
-            <View>
+          <SettingsRow
+            icon="lock-closed-outline"
+            title="Change Password"
+            onPress={() =>
+              router.push(
+                "/password/change-password"
+              )
+            }
+          />
 
-              <Text style={styles.cardTitle}>
-                New Password
+          <View style={styles.divider} />
+
+          {/* BIOMETRIC LOCK */}
+
+          <View style={styles.row}>
+
+            <View style={styles.rowLeft}>
+
+              <View style={styles.iconBox}>
+
+                <Ionicons
+                  name="finger-print-outline"
+                  size={23}
+                  color="#003456"
+                />
+
+              </View>
+
+              <Text style={styles.rowText}>
+                Biometric Lock
               </Text>
 
-              <Text style={styles.cardSubtitle}>
-                Create a strong password
-              </Text>
-
             </View>
+
+            {/* UI ONLY TOGGLE */}
+
+            <TouchableOpacity
+              style={[
+                styles.toggle,
+                biometricEnabled &&
+                  styles.toggleActive,
+              ]}
+              onPress={() =>
+                setBiometricEnabled(
+                  !biometricEnabled
+                )
+              }
+              activeOpacity={0.8}
+            >
+
+              <View
+                style={[
+                  styles.toggleCircle,
+                  biometricEnabled &&
+                    styles.toggleCircleActive,
+                ]}
+              />
+
+            </TouchableOpacity>
 
           </View>
 
-          {/* =====================================
-              NEW PASSWORD
-          ===================================== */}
+        </View>
 
-          <View style={styles.inputGroup}>
+        {/* =====================================
+            INFORMATION
+        ===================================== */}
 
-            <Text style={styles.label}>
-              New Password
-            </Text>
+        <Text style={styles.sectionTitle}>
+          INFORMATION
+        </Text>
 
-            <View style={styles.inputContainer}>
+        <View style={styles.card}>
 
-              <Ionicons
-                name="key-outline"
-                size={21}
-                color="#334155"
-              />
+          {/* PRIVACY POLICY */}
 
-              <TextInput
-                style={styles.input}
-                placeholder="Enter new password"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={hideNewPassword}
-                value={newPassword}
-                onChangeText={setNewPassword}
-              />
+          <SettingsRow
+            icon="document-text-outline"
+            title="Privacy Policy"
+            onPress={() =>
+              router.push(
+                "/settings/privacy-policy"
+              )
+            }
+          />
 
-              <TouchableOpacity
-                onPress={() =>
-                  setHideNewPassword(
-                    !hideNewPassword
-                  )
-                }
-                style={styles.eyeButton}
-              >
+          <View style={styles.divider} />
+
+          {/* CONTACT SUPPORT */}
+
+          <SettingsRow
+            icon="chatbubble-ellipses-outline"
+            title="Contact Support"
+            onPress={() =>
+              router.push(
+                "/settings/contact-support"
+              )
+            }
+          />
+
+          <View style={styles.divider} />
+
+          {/* ABOUT */}
+
+          <SettingsRow
+            icon="information-circle-outline"
+            title="About"
+            onPress={() =>
+              router.push(
+                "/settings/about"
+              )
+            }
+          />
+
+          <View style={styles.divider} />
+
+          {/* APP VERSION */}
+
+          <View style={styles.row}>
+
+            <View style={styles.rowLeft}>
+
+              <View style={styles.iconBox}>
 
                 <Ionicons
-                  name={
-                    hideNewPassword
-                      ? "eye-outline"
-                      : "eye-off-outline"
-                  }
+                  name="code-slash-outline"
                   size={22}
-                  color="#94A3B8"
+                  color="#003456"
                 />
 
-              </TouchableOpacity>
+              </View>
 
-            </View>
+              <View>
 
-          </View>
-
-          {/* =====================================
-              CONFIRM PASSWORD
-          ===================================== */}
-
-          <View style={styles.inputGroup}>
-
-            <Text style={styles.label}>
-              Confirm Password
-            </Text>
-
-            <View style={styles.inputContainer}>
-
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={21}
-                color="#334155"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm new password"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={
-                  hideConfirmPassword
-                }
-                value={confirmPassword}
-                onChangeText={
-                  setConfirmPassword
-                }
-              />
-
-              <TouchableOpacity
-                onPress={() =>
-                  setHideConfirmPassword(
-                    !hideConfirmPassword
-                  )
-                }
-                style={styles.eyeButton}
-              >
-
-                <Ionicons
-                  name={
-                    hideConfirmPassword
-                      ? "eye-outline"
-                      : "eye-off-outline"
-                  }
-                  size={22}
-                  color="#94A3B8"
-                />
-
-              </TouchableOpacity>
-
-            </View>
-
-          </View>
-
-          {/* =====================================
-              CHANGE PASSWORD BUTTON
-          ===================================== */}
-
-          <TouchableOpacity
-            style={[
-              styles.changeButton,
-              loading && styles.disabledButton,
-            ]}
-            onPress={changePassword}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-
-            {loading ? (
-
-              <ActivityIndicator
-                color="#FFFFFF"
-              />
-
-            ) : (
-
-              <>
-
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={21}
-                  color="#FFFFFF"
-                />
-
-                <Text style={styles.buttonText}>
-                  Change Password
+                <Text
+                  style={styles.rowText}
+                >
+                  App Version
                 </Text>
 
-              </>
+                <Text
+                  style={styles.smallText}
+                >
+                  Current installation
+                </Text>
 
-            )}
+              </View>
 
-          </TouchableOpacity>
+            </View>
+
+            <View
+              style={styles.versionBadge}
+            >
+
+              <Text
+                style={styles.versionText}
+              >
+                v1.0.0
+              </Text>
+
+            </View>
+
+          </View>
 
         </View>
 
         {/* =====================================
-            FOOTER BRANDING
+            ACCOUNT
         ===================================== */}
 
-        <View style={styles.versionCard}>
+        <Text style={styles.sectionTitle}>
+          ACCOUNT
+        </Text>
 
-          <View style={styles.footerIconBox}>
+        {/* LOGOUT */}
 
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={25}
-              color="#2563EB"
+        <TouchableOpacity
+          style={styles.logoutCard}
+          onPress={logout}
+          disabled={logoutLoading}
+          activeOpacity={0.7}
+        >
+
+          <View style={styles.rowLeft}>
+
+            <View
+              style={
+                styles.logoutIconBox
+              }
+            >
+
+              <Ionicons
+                name="log-out-outline"
+                size={22}
+                color="#BA1A1A"
+              />
+
+            </View>
+
+            <Text
+              style={styles.logoutText}
+            >
+              Logout
+            </Text>
+
+          </View>
+
+          {logoutLoading ? (
+
+            <ActivityIndicator
+              color="#BA1A1A"
             />
 
-          </View>
+          ) : (
 
-          <View style={styles.versionTextContainer}>
+            <Ionicons
+              name="chevron-forward"
+              size={22}
+              color="#BA1A1A"
+            />
 
-            <Text style={styles.versionTitle}>
-              Vamsi Vault
-            </Text>
+          )}
 
-            <Text style={styles.versionText}>
-              Version 1.0.0
-            </Text>
+        </TouchableOpacity>
 
-          </View>
+        {/* =====================================
+            FOOTER
+        ===================================== */}
+
+        <View style={styles.footer}>
+
+          <Text style={styles.footerText}>
+            Vamsi Vault v1.0.0
+          </Text>
+
+          <Text style={styles.footerSubText}>
+            Securely protect your digital life
+          </Text>
 
         </View>
 
@@ -335,239 +413,314 @@ export default function SettingsScreen() {
   );
 }
 
-
 // =====================================
 // STYLES
 // =====================================
 
 const styles = StyleSheet.create({
 
+  // =====================================
+  // CONTAINER
+  // =====================================
+
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 160,
+    backgroundColor: "#F7F9FB",
   },
 
   // =====================================
-  // HEADER
+  // MAIN SCROLL
+  // =====================================
+
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
+  },
+
+  // =====================================
+  // SETTINGS HEADING
   // =====================================
 
   header: {
-    marginBottom: 30,
+    height: 56,
+    justifyContent: "center",
+    alignItems: "center",
+
+    // IMPORTANT:
+    // No extra space below SETTINGS
+
+    marginBottom: 0,
   },
 
   title: {
-    fontSize: 30,
+    fontSize: 22,
     fontWeight: "800",
-    color: "#1E3A5F",
-    marginBottom: 8,
-  },
-
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#64748B",
+    color: "#003456",
+    letterSpacing: 1.5,
   },
 
   // =====================================
-  // PASSWORD CARD
+  // SECTION TITLE
   // =====================================
 
-  passwordCard: {
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#727780",
+    letterSpacing: 1.5,
+
+    marginTop: 10,
+    marginBottom: 10,
+
+    paddingHorizontal: 4,
+  },
+
+  // =====================================
+  // CARD
+  // =====================================
+
+  card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    padding: 28,
 
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderRadius: 9,
+
+    overflow: "hidden",
 
     shadowColor: "#000",
+
     shadowOffset: {
       width: 0,
       height: 2,
     },
+
     shadowOpacity: 0.04,
+
     shadowRadius: 6,
 
     elevation: 2,
   },
 
   // =====================================
-  // CARD HEADER
+  // ROW
   // =====================================
 
-  cardHeader: {
-   alignItems: "center",
-   justifyContent:"center",
-    marginBottom: 30,
+  row: {
+    minHeight: 72,
+
+    paddingHorizontal: 20,
+
+    paddingVertical: 14,
+
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
   },
+
+  // =====================================
+  // ROW LEFT
+  // =====================================
+
+  rowLeft: {
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    flex: 1,
+  },
+
+  // =====================================
+  // ICON BOX
+  // =====================================
 
   iconBox: {
-    width: 58,
-    height: 58,
-    borderRadius: 16,
-    backgroundColor: "#EFF6FF",
+    width: 42,
+
+    height: 42,
+
+    borderRadius: 9,
+
+    backgroundColor: "#ECEEF0",
+
     justifyContent: "center",
+
     alignItems: "center",
-    marginRight: 16,
+
+    marginRight: 15,
   },
 
-  cardTitle: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#0F172A",
-    textAlign: "center",
-  },
+  // =====================================
+  // ROW TEXT
+  // =====================================
 
-  cardSubtitle: {
+  rowText: {
     fontSize: 16,
-    color: "#94A3B8",
-    marginTop: 6,
-    textAlign: "center"
+
+    color: "#191C1E",
+
+    fontWeight: "500",
   },
 
   // =====================================
-  // INPUT GROUP
+  // SMALL TEXT
   // =====================================
 
-  inputGroup: {
-    marginBottom: 22,
-  },
+  smallText: {
+    fontSize: 12,
 
-  label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1E293B",
-    marginBottom: 8,
-    paddingHorizontal: 2,
-  },
+    color: "#727780",
 
-  inputContainer: {
-    height: 58,
-    flexDirection: "row",
-    alignItems: "center",
-
-    backgroundColor: "#FFFFFF",
-
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-
-    borderRadius: 7,
-
-    paddingHorizontal: 15,
-  },
-
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    marginRight: 8,
-
-    fontSize: 15,
-    color: "#334155",
-  },
-
-  eyeButton: {
-    padding: 3,
+    marginTop: 3,
   },
 
   // =====================================
-  // CHANGE PASSWORD BUTTON
+  // DIVIDER
   // =====================================
 
-  changeButton: {
-    height: 62,
+  divider: {
+    height: 1,
 
-    marginTop: 6,
+    backgroundColor: "#E6E8EA",
 
+    marginHorizontal: 20,
+  },
+
+  // =====================================
+  // BIOMETRIC TOGGLE
+  // =====================================
+
+  toggle: {
+    width: 52,
+
+    height: 30,
+
+    borderRadius: 9,
+
+    backgroundColor: "#C1C7D0",
+
+    justifyContent: "center",
+
+    paddingHorizontal: 3,
+  },
+
+  toggleActive: {
     backgroundColor: "#064B78",
-
-    borderRadius: 7,
-
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-
-    shadowColor: "#1E3A8A",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-
-    elevation: 4,
   },
 
-  disabledButton: {
-    opacity: 0.7,
-  },
+  toggleCircle: {
+    width: 24,
 
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    marginLeft: 9,
-  },
+    height: 24,
 
-  // =====================================
-  // FOOTER BRANDING
-  // =====================================
+    borderRadius: 9,
 
-  versionCard: {
     backgroundColor: "#FFFFFF",
-
-    borderRadius: 10,
-
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-
-    padding: 20,
-
-    marginTop: 24,
-
-    flexDirection: "row",
-    alignItems: "center",
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-
-    elevation: 1,
   },
 
-  footerIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#EFF6FF",
-    justifyContent: "center",
-    alignItems: "center",
+  toggleCircleActive: {
+    alignSelf: "flex-end",
   },
 
-  versionTextContainer: {
-    marginLeft: 14,
-  },
+  // =====================================
+  // VERSION BADGE
+  // =====================================
 
-  versionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#1E293B",
+  versionBadge: {
+    backgroundColor: "#ECEEF0",
+
+    paddingHorizontal: 12,
+
+    paddingVertical: 6,
+
+    borderRadius: 9,
   },
 
   versionText: {
     fontSize: 12,
-    color: "#94A3B8",
-    marginTop: 4,
+
+    color: "#727780",
+
+    fontWeight: "600",
+  },
+
+  // =====================================
+  // LOGOUT
+  // =====================================
+
+  logoutCard: {
+    minHeight: 72,
+
+    paddingHorizontal: 20,
+
+    paddingVertical: 14,
+
+    backgroundColor: "#FFF1F0",
+
+    borderWidth: 1,
+
+    borderColor: "#FFDAD6",
+
+    borderRadius: 9,
+
+    flexDirection: "row",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+  },
+
+  logoutIconBox: {
+    width: 42,
+
+    height: 42,
+
+    borderRadius: 9,
+
+    backgroundColor: "#FFE4E1",
+
+    justifyContent: "center",
+
+    alignItems: "center",
+
+    marginRight: 15,
+  },
+
+  logoutText: {
+    fontSize: 16,
+
+    fontWeight: "700",
+
+    color: "#BA1A1A",
+  },
+
+  // =====================================
+  // FOOTER
+  // =====================================
+
+  footer: {
+    alignItems: "center",
+
+    marginTop: 35,
+
+    opacity: 0.6,
+  },
+
+  footerText: {
+    fontSize: 12,
+
+    color: "#727780",
+
+    fontWeight: "600",
+  },
+
+  footerSubText: {
+    fontSize: 11,
+
+    color: "#727780",
+
+    marginTop: 5,
   },
 
 });
-

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import {
   SafeAreaView,
   View,
@@ -10,18 +11,26 @@ import {
   Image,
   TextInput,
   Modal,
+  ScrollView,
 } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
+import { Ionicons } from "@expo/vector-icons";
+
 import { supabase } from "../../services/supabase";
 
 export default function ProfileScreen() {
+  // =====================================
+  // STATES
+  // =====================================
+
   const [loading, setLoading] = useState(true);
 
   const [fullName, setFullName] = useState("");
+
   const [email, setEmail] = useState("");
 
   const [profileImage, setProfileImage] =
@@ -29,6 +38,12 @@ export default function ProfileScreen() {
 
   const [passwordCount, setPasswordCount] =
     useState(0);
+
+  const [categoryCount, setCategoryCount] =
+    useState(0);
+
+  const [biometricEnabled, setBiometricEnabled] =
+    useState(true);
 
   const [editModalVisible, setEditModalVisible] =
     useState(false);
@@ -44,6 +59,10 @@ export default function ProfileScreen() {
 
   const [logoutLoading, setLogoutLoading] =
     useState(false);
+
+  // =====================================
+  // LOAD PROFILE
+  // =====================================
 
   useEffect(() => {
     loadProfile();
@@ -71,24 +90,34 @@ export default function ProfileScreen() {
         );
 
         router.replace("/(auth)/login");
+
         return;
       }
 
       const name =
-        user.user_metadata?.full_name || "User";
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        "User";
 
       const image =
-        user.user_metadata?.avatar_url || null;
+        user.user_metadata?.avatar_url ||
+        null;
 
       setFullName(name);
+
       setEmail(user.email || "");
+
       setProfileImage(image);
 
       await loadPasswordCount(user.id);
 
+      await loadCategoryCount(user.id);
+
       setLoading(false);
 
     } catch (error) {
+      console.log("LOAD PROFILE ERROR:", error);
+
       setLoading(false);
 
       Alert.alert(
@@ -98,22 +127,28 @@ export default function ProfileScreen() {
     }
   };
 
+  // =====================================
+  // PASSWORD COUNT
+  // =====================================
+
   const loadPasswordCount = async (
     userId: string
   ) => {
     try {
-      const { count, error } =
-        await supabase
-          .from("passwords")
-          .select("*", {
-            count: "exact",
-            head: true,
-          })
-          .eq("user_id", userId);
+      const {
+        count,
+        error,
+      } = await supabase
+        .from("passwords")
+        .select("*", {
+          count: "exact",
+          head: true,
+        })
+        .eq("user_id", userId);
 
       if (error) {
         console.log(
-          "Password count error:",
+          "PASSWORD COUNT ERROR:",
           error.message
         );
 
@@ -126,6 +161,51 @@ export default function ProfileScreen() {
       console.log(error);
     }
   };
+
+  // =====================================
+  // CATEGORY COUNT
+  // =====================================
+
+  const loadCategoryCount = async (
+    userId: string
+  ) => {
+    try {
+      const {
+        data,
+        error,
+      } = await supabase
+        .from("passwords")
+        .select("category")
+        .eq("user_id", userId);
+
+      if (error) {
+        console.log(
+          "CATEGORY COUNT ERROR:",
+          error.message
+        );
+
+        return;
+      }
+
+      const uniqueCategories =
+        new Set(
+          (data || [])
+            .map((item) => item.category)
+            .filter(Boolean)
+        );
+
+      setCategoryCount(
+        uniqueCategories.size
+      );
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // =====================================
+  // CHOOSE IMAGE
+  // =====================================
 
   const chooseImage = async () => {
     const permission =
@@ -173,6 +253,10 @@ export default function ProfileScreen() {
     );
   };
 
+  // =====================================
+  // UPLOAD PROFILE IMAGE
+  // =====================================
+
   const uploadProfileImage = async (
     uri: string,
     userId: string
@@ -181,23 +265,32 @@ export default function ProfileScreen() {
       const response =
         await fetch(uri);
 
-      const blob =
-        await response.blob();
+      if (!response.ok) {
+        throw new Error(
+          "Unable to read selected image."
+        );
+      }
+
+      const arrayBuffer =
+        await response.arrayBuffer();
 
       const filePath =
         `profiles/${userId}.jpg`;
 
-      const { error } =
-        await supabase.storage
-          .from("avatars")
-          .upload(
-            filePath,
-            blob,
-            {
-              contentType: "image/jpeg",
-              upsert: true,
-            }
-          );
+      const {
+        error,
+      } = await supabase.storage
+        .from("avatars")
+        .upload(
+          filePath,
+          arrayBuffer,
+          {
+            contentType:
+              "image/jpeg",
+
+            upsert: true,
+          }
+        );
 
       if (error) {
         throw error;
@@ -208,22 +301,29 @@ export default function ProfileScreen() {
       } =
         supabase.storage
           .from("avatars")
-          .getPublicUrl(filePath);
+          .getPublicUrl(
+            filePath
+          );
 
       return (
         publicUrlData.publicUrl +
         `?t=${Date.now()}`
       );
 
-    } catch (error) {
+    } catch (error: any) {
       console.log(
-        "Upload error:",
-        error
+        "PROFILE IMAGE UPLOAD ERROR:",
+        error?.message ||
+          error
       );
 
       return null;
     }
   };
+
+  // =====================================
+  // SAVE PROFILE
+  // =====================================
 
   const saveProfile = async () => {
     if (!editName.trim()) {
@@ -243,14 +343,16 @@ export default function ProfileScreen() {
       } = await supabase.auth.getUser();
 
       if (!user) {
+        setSaving(false);
+
         Alert.alert(
           "Session Expired",
           "Please login again."
         );
 
-        setSaving(false);
-
-        router.replace("/(auth)/login");
+        router.replace(
+          "/(auth)/login"
+        );
 
         return;
       }
@@ -266,12 +368,12 @@ export default function ProfileScreen() {
           );
 
         if (!uploadedUrl) {
+          setSaving(false);
+
           Alert.alert(
             "Upload Failed",
             "Unable to upload profile picture."
           );
-
-          setSaving(false);
 
           return;
         }
@@ -280,7 +382,9 @@ export default function ProfileScreen() {
           uploadedUrl;
       }
 
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.updateUser({
           data: {
             full_name:
@@ -292,12 +396,12 @@ export default function ProfileScreen() {
         });
 
       if (error) {
+        setSaving(false);
+
         Alert.alert(
           "Update Failed",
           error.message
         );
-
-        setSaving(false);
 
         return;
       }
@@ -312,34 +416,59 @@ export default function ProfileScreen() {
 
       setSelectedImage(null);
 
-      setEditModalVisible(false);
+      setEditModalVisible(
+        false
+      );
+
+      setSaving(false);
 
       Alert.alert(
         "Success",
         "Profile updated successfully."
       );
 
-      setSaving(false);
+    } catch (error: any) {
+      console.log(
+        "SAVE PROFILE ERROR:",
+        error?.message ||
+          error
+      );
 
-    } catch (error) {
       setSaving(false);
 
       Alert.alert(
         "Error",
-        "Something went wrong."
+        error?.message ||
+          "Something went wrong."
       );
     }
   };
 
+  // =====================================
+  // OPEN EDIT PROFILE
+  // =====================================
+
   const openEditProfile = () => {
     setEditName(fullName);
 
-    setSelectedImage(
-      profileImage
-    );
+    setSelectedImage(null);
 
     setEditModalVisible(true);
   };
+
+  // =====================================
+  // CLOSE EDIT PROFILE
+  // =====================================
+
+  const closeEditProfile = () => {
+    setSelectedImage(null);
+
+    setEditModalVisible(false);
+  };
+
+  // =====================================
+  // LOGOUT
+  // =====================================
 
   const logout = () => {
     Alert.alert(
@@ -350,8 +479,10 @@ export default function ProfileScreen() {
           text: "Cancel",
           style: "cancel",
         },
+
         {
           text: "Logout",
+          style: "destructive",
           onPress: confirmLogout,
         },
       ]
@@ -362,7 +493,9 @@ export default function ProfileScreen() {
     try {
       setLogoutLoading(true);
 
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.signOut();
 
       if (error) {
@@ -387,6 +520,10 @@ export default function ProfileScreen() {
       );
     }
   };
+
+  // =====================================
+  // LOADING SCREEN
+  // =====================================
 
   if (loading) {
     return (
@@ -413,263 +550,524 @@ export default function ProfileScreen() {
     );
   }
 
+  // =====================================
+  // MAIN UI
+  // =====================================
+
   return (
     <SafeAreaView
-      style={styles.container}
+      style={
+        styles.container
+      }
     >
       <StatusBar style="dark" />
 
-      <View
-        style={styles.topSpace}
-      />
-
-      <Text
-        style={styles.pageTitle}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          styles.scrollContent
+        }
       >
-        PROFILE
-      </Text>
 
-      {/* PROFILE CARD */}
+        {/* PAGE TITLE */}
 
-      <View
-        style={styles.profileCard}
-      >
         <View
-          style={styles.profileInfo}
+          style={
+            styles.topHeader
+          }
+        >
+          <Text
+            style={
+              styles.pageTitle
+            }
+          >
+            PROFILE
+          </Text>
+
+          <TouchableOpacity
+            onPress={() =>
+              router.push(
+                "/settings/settings"
+              )
+            }
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={20}
+              color="#003456"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* =====================================
+            IDENTITY HEADER
+        ===================================== */}
+
+        <View
+          style={
+            styles.identitySection
+          }
         >
 
           <View
-            style={styles.avatar}
+            style={
+              styles.avatarWrapper
+            }
           >
-            {profileImage ? (
-              <Image
-                source={{
-                  uri: profileImage,
-                }}
-                style={
-                  styles.avatarImage
-                }
+
+            <View
+              style={
+                styles.avatarLarge
+              }
+            >
+
+              {profileImage ? (
+
+                <Image
+                  source={{
+                    uri:
+                      profileImage,
+                  }}
+                  style={
+                    styles.avatarImage
+                  }
+                />
+
+              ) : (
+
+                <Ionicons
+                  name="person"
+                  size={42}
+                  color="#064B78"
+                />
+
+              )}
+
+            </View>
+
+            <TouchableOpacity
+              style={
+                styles.cameraButton
+              }
+              onPress={
+                openEditProfile
+              }
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="create-outline"
+                size={18}
+                color="#FFFFFF"
               />
-            ) : (
+            </TouchableOpacity>
+
+          </View>
+
+          <Text
+            style={
+              styles.identityName
+            }
+          >
+            {fullName}
+          </Text>
+
+        </View>
+
+        {/* =====================================
+            PERSONAL INFORMATION
+        ===================================== */}
+
+        <View
+          style={
+            styles.infoCard
+          }
+        >
+
+          <View
+            style={
+              styles.cardHeader
+            }
+          >
+
+            <Ionicons
+              name="person-outline"
+              size={22}
+              color="#003456"
+            />
+
+            <Text
+              style={
+                styles.cardTitle
+              }
+            >
+              Personal Information
+            </Text>
+
+          </View>
+
+          <View
+            style={
+              styles.infoRows
+            }
+          >
+
+            <View
+              style={
+                styles.infoRow
+              }
+            >
               <Text
                 style={
-                  styles.avatarText
+                  styles.infoLabel
                 }
               >
-                👤
+                Full Name
               </Text>
-            )}
+
+              <Text
+                style={
+                  styles.infoValue
+                }
+                numberOfLines={1}
+              >
+                {fullName}
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.divider
+              }
+            />
+
+            <View
+              style={
+                styles.infoRow
+              }
+            >
+              <Text
+                style={
+                  styles.infoLabel
+                }
+              >
+                Email
+              </Text>
+
+              <Text
+                style={
+                  styles.infoValue
+                }
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {email}
+              </Text>
+            </View>
+
+            <View
+              style={
+                styles.divider
+              }
+            />
+
+            <View
+              style={
+                styles.infoRow
+              }
+            >
+              <Text
+                style={
+                  styles.infoLabel
+                }
+              >
+                Joined
+              </Text>
+
+              <Text
+                style={
+                  styles.infoValue
+                }
+              >
+                20 Jul 2026
+              </Text>
+            </View>
+
+          </View>
+
+        </View>
+
+        {/* =====================================
+            SECURITY CARD
+        ===================================== */}
+
+        <View
+          style={
+            styles.infoCard
+          }
+        >
+
+          <View
+            style={
+              styles.cardHeader
+            }
+          >
+
+            <Ionicons
+              name="shield-outline"
+              size={22}
+              color="#003456"
+            />
+
+            <Text
+              style={
+                styles.cardTitle
+              }
+            >
+              Security
+            </Text>
+
           </View>
 
           <View
-            style={styles.userDetails}
+            style={
+              styles.infoRows
+            }
           >
-            <Text
-              style={styles.name}
-            >
-              {fullName}
-            </Text>
 
-            <Text
-              style={styles.email}
+            {/* PASSWORD */}
+
+            <View
+              style={
+                styles.infoRow
+              }
             >
-              {email}
-            </Text>
+
+              <Text
+                style={
+                  styles.infoLabel
+                }
+                numberOfLines={1}
+              >
+                Password
+              </Text>
+
+              <View
+                style={
+                  styles.securityStatus
+                }
+              >
+
+                {/* IMPORTANT:
+                    Protected stays in ONE LINE
+                */}
+
+                <Text
+                  style={
+                    styles.protectedText
+                  }
+                  numberOfLines={1}
+                >
+                  Protected
+                </Text>
+
+                <View
+                  style={
+                    styles.statusDot
+                  }
+                />
+
+              </View>
+
+            </View>
+
+            <View
+              style={
+                styles.divider
+              }
+            />
+
+            {/* BIOMETRICS */}
+
+            <View
+              style={
+                styles.infoRow
+              }
+            >
+
+              <Text
+                style={
+                  styles.infoLabel
+                }
+                numberOfLines={1}
+              >
+                Biometrics
+              </Text>
+
+              <View
+                style={
+                  styles.biometricStatus
+                }
+              >
+
+                <Text
+                  style={
+                    styles.biometricText
+                  }
+                  numberOfLines={1}
+                >
+                  {biometricEnabled
+                    ? "Enabled"
+                    : "Disabled"}
+                </Text>
+
+                <View
+                  style={[
+                    styles.activeBadge,
+                    !biometricEnabled &&
+                      styles.disabledBadge,
+                  ]}
+                >
+
+                  <Text
+                    style={[
+                      styles.activeBadgeText,
+                      !biometricEnabled &&
+                        styles.disabledBadgeText,
+                    ]}
+                  >
+                    {biometricEnabled
+                      ? "Active"
+                      : "Off"}
+                  </Text>
+
+                </View>
+
+              </View>
+
+            </View>
+
           </View>
 
         </View>
 
-        <TouchableOpacity
-          style={
-            styles.editButton
-          }
-          onPress={
-            openEditProfile
-          }
-        >
-          <Text
-            style={styles.editText}
-          >
-            ✏️ Edit Profile
-          </Text>
-        </TouchableOpacity>
-
-      </View>
-
-      {/* YOUR VAULT */}
-
-      <Text
-        style={
-          styles.sectionTitle
-        }
-      >
-        YOUR VAULT
-      </Text>
-
-      <View
-        style={
-          styles.vaultRow
-        }
-      >
+        {/* =====================================
+            VAULT STATISTICS
+        ===================================== */}
 
         <View
           style={
-            styles.vaultCard
+            styles.infoCard
           }
         >
-          <Text
-            style={
-              styles.vaultIcon
-            }
-          >
-            🔐
-          </Text>
 
-          <Text
+          <View
             style={
-              styles.vaultNumber
+              styles.cardHeader
             }
           >
-            {passwordCount}
-          </Text>
 
-          <Text
+            <Ionicons
+              name="bar-chart-outline"
+              size={22}
+              color="#003456"
+            />
+
+            <Text
+              style={
+                styles.cardTitle
+              }
+            >
+              Vault Statistics
+            </Text>
+
+          </View>
+
+          <View
             style={
-              styles.vaultLabel
+              styles.statisticsRow
             }
           >
-            Passwords
-          </Text>
+
+            {/* ACCOUNTS */}
+
+            <View
+              style={
+                styles.statBox
+              }
+            >
+
+              <Text
+                style={
+                  styles.statNumber
+                }
+              >
+                {passwordCount}
+              </Text>
+
+              <Text
+                style={
+                  styles.statLabel
+                }
+              >
+                ACCOUNTS
+              </Text>
+
+            </View>
+
+            {/* CATEGORIES */}
+
+            <View
+              style={
+                styles.statBox
+              }
+            >
+
+              <Text
+                style={
+                  styles.statNumber
+                }
+              >
+                {categoryCount}
+              </Text>
+
+              <Text
+                style={
+                  styles.statLabel
+                }
+              >
+                CATEGORIES
+              </Text>
+
+            </View>
+
+          </View>
+
         </View>
+
+        {/* FOOTER */}
 
         <View
           style={
-            styles.vaultCard
+            styles.footer
           }
         >
-          <Text
-            style={
-              styles.vaultIcon
-            }
-          >
-            🛡️
-          </Text>
 
           <Text
             style={
-              styles.secureText
+              styles.footerText
             }
           >
-            Secure
+            VAMSI VAULT
           </Text>
 
-          <Text
-            style={
-              styles.vaultLabel
-            }
-          >
-            Vault
-          </Text>
         </View>
 
-      </View>
+      </ScrollView>
 
-      {/* ACCOUNT */}
-
-      <Text
-        style={
-          styles.accountTitle
-        }
-      >
-        ACCOUNT
-      </Text>
-
-      {/* SETTINGS */}
-
-      <TouchableOpacity
-        style={
-          styles.menuCard
-        }
-        onPress={() =>
-          router.push(
-            "/settings/settings"
-          )
-        }
-      >
-        <Text
-          style={
-            styles.menuText
-          }
-        >
-          ⚙️ Settings
-        </Text>
-
-        <Text
-          style={
-            styles.arrow
-          }
-        >
-          ›
-        </Text>
-      </TouchableOpacity>
-
-      {/* ABOUT */}
-
-      <TouchableOpacity
-        style={
-          styles.menuCard
-        }
-        onPress={() =>
-          router.push(
-            "/settings/about"
-          )
-        }
-      >
-        <Text
-          style={
-            styles.menuText
-          }
-        >
-          ℹ️ About
-        </Text>
-
-        <Text
-          style={
-            styles.arrow
-          }
-        >
-          ›
-        </Text>
-      </TouchableOpacity>
-
-      {/* LOGOUT */}
-
-      <TouchableOpacity
-        style={
-          styles.logoutButton
-        }
-        onPress={logout}
-        activeOpacity={0.8}
-        disabled={
-          logoutLoading
-        }
-      >
-        {logoutLoading ? (
-          <ActivityIndicator
-            color="#FFFFFF"
-          />
-        ) : (
-          <Text
-            style={
-              styles.logoutText
-            }
-          >
-            🚪 Logout
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      {/* EDIT MODAL */}
+      {/* =====================================
+          EDIT PROFILE MODAL
+      ===================================== */}
 
       <Modal
         visible={
@@ -677,12 +1075,11 @@ export default function ProfileScreen() {
         }
         transparent
         animationType="slide"
-        onRequestClose={() =>
-          setEditModalVisible(
-            false
-          )
+        onRequestClose={
+          closeEditProfile
         }
       >
+
         <View
           style={
             styles.modalBackground
@@ -698,10 +1095,12 @@ export default function ProfileScreen() {
             <Text
               style={
                 styles.modalTitle
-              }
+            }
             >
               Edit Profile
             </Text>
+
+            {/* EDIT AVATAR */}
 
             <TouchableOpacity
               style={
@@ -710,24 +1109,32 @@ export default function ProfileScreen() {
               onPress={
                 chooseImage
               }
+              activeOpacity={0.8}
             >
-              {selectedImage ? (
+
+              {selectedImage ||
+              profileImage ? (
+
                 <Image
                   source={{
-                    uri: selectedImage,
+                    uri:
+                      selectedImage ||
+                      profileImage ||
+                      "",
                   }}
                   style={
                     styles.editAvatarImage
                   }
                 />
+
               ) : (
-                <Text
-                  style={
-                    styles.editAvatarText
-                  }
-                >
-                  👤
-                </Text>
+
+                <Ionicons
+                  name="person"
+                  size={55}
+                  color="#064B78"
+                />
+
               )}
 
               <View
@@ -735,10 +1142,15 @@ export default function ProfileScreen() {
                   styles.cameraBadge
                 }
               >
-                <Text>
-                  📷
-                </Text>
+
+                <Ionicons
+                  name="camera"
+                  size={18}
+                  color="#FFFFFF"
+                />
+
               </View>
+
             </TouchableOpacity>
 
             <Text
@@ -749,16 +1161,23 @@ export default function ProfileScreen() {
               Tap to choose photo
             </Text>
 
+            {/* NAME */}
+
             <TextInput
               style={
                 styles.nameInput
               }
               placeholder="Enter your name"
-              value={editName}
+              placeholderTextColor="#727780"
+              value={
+                editName
+              }
               onChangeText={
                 setEditName
               }
             />
+
+            {/* SAVE */}
 
             <TouchableOpacity
               style={
@@ -771,11 +1190,15 @@ export default function ProfileScreen() {
                 saving
               }
             >
+
               {saving ? (
+
                 <ActivityIndicator
                   color="#FFFFFF"
                 />
+
               ) : (
+
                 <Text
                   style={
                     styles.saveText
@@ -783,16 +1206,19 @@ export default function ProfileScreen() {
                 >
                   Save Changes
                 </Text>
+
               )}
+
             </TouchableOpacity>
 
+            {/* CANCEL */}
+
             <TouchableOpacity
-              onPress={() =>
-                setEditModalVisible(
-                  false
-                )
+              onPress={
+                closeEditProfile
               }
             >
+
               <Text
                 style={
                   styles.cancelText
@@ -800,33 +1226,43 @@ export default function ProfileScreen() {
               >
                 Cancel
               </Text>
+
             </TouchableOpacity>
 
           </View>
 
         </View>
+
       </Modal>
 
     </SafeAreaView>
   );
 }
 
+// =====================================
+// STYLES
+// =====================================
+
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
-    paddingHorizontal: 24,
-    paddingTop: 30,
+    backgroundColor: "#F7F9FB",
   },
 
-  topSpace: {
-    height: 25,
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 50,
   },
+
+  // =====================================
+  // LOADING
+  // =====================================
 
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F7F9FB",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -834,178 +1270,262 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 16,
-    color: "#666",
+    color: "#41474F",
+  },
+
+  // =====================================
+  // TOP HEADER
+  // =====================================
+
+  topHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
 
   pageTitle: {
     fontSize: 30,
-    fontWeight: "900",
-    color: "#111827",
-    marginBottom: 18,
-    letterSpacing: 2,
+    fontWeight: "800",
+    color: "#003456",
+    letterSpacing: 1.5,
   },
 
-  profileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    padding: 18,
-    elevation: 3,
-  },
+  // =====================================
+  // IDENTITY
+  // =====================================
 
-  profileInfo: {
-    flexDirection: "row",
+  identitySection: {
     alignItems: "center",
+    paddingVertical: 16,
+    marginBottom: 20,
   },
 
-  avatar: {
-    width: 78,
-    height: 78,
-    borderRadius: 16,
-    backgroundColor: "#DBEAFE",
+  avatarWrapper: {
+    position: "relative",
+  },
+
+  avatarLarge: {
+    width: 96,
+    height: 96,
+    borderRadius: 9,
+    overflow: "hidden",
+    backgroundColor: "#CFE5FF",
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
+    borderWidth: 4,
+    borderColor: "#E0E3E5",
   },
 
   avatarImage: {
     width: "100%",
     height: "100%",
+    resizeMode: "cover",
   },
 
-  avatarText: {
-    fontSize: 38,
+  cameraButton: {
+    position: "absolute",
+    right: -4,
+    bottom: -4,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: "#003456",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#F7F9FB",
   },
 
-  userDetails: {
-    marginLeft: 16,
-    flex: 1,
-  },
-
-  name: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#111827",
-  },
-
-  email: {
-    marginTop: 5,
-    fontSize: 14,
-    color: "#6B7280",
-  },
-
-  editButton: {
-    alignSelf: "flex-end",
+  identityName: {
     marginTop: 14,
-  },
-
-  editText: {
-    color: "#064B78",
-    fontSize: 15,
+    fontSize: 20,
     fontWeight: "700",
+    color: "#191C1E",
   },
 
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#6B7280",
-    letterSpacing: 1,
-    marginTop: 24,
-    marginBottom: 12,
-  },
+  // =====================================
+  // CARD
+  // =====================================
 
-  vaultRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  vaultCard: {
-    width: "48%",
-    height: 125,
+  infoCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 2,
-  },
+    borderRadius: 9,
+    padding: 20,
+    marginBottom: 16,
 
-  vaultIcon: {
-    fontSize: 30,
-    marginBottom: 5,
-  },
+    borderWidth: 1,
+    borderColor: "rgba(193,199,208,0.3)",
 
-  vaultNumber: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#064B78",
-  },
-
-  secureText: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#064B78",
-  },
-
-  vaultLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginTop: 2,
-  },
-
-  accountTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#6B7280",
-    letterSpacing: 1,
-    marginTop: 24,
-    marginBottom: 12,
-  },
-
-  menuCard: {
-    height: 58,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    elevation: 2,
-  },
-
-  menuText: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#374151",
-  },
-
-  arrow: {
-    fontSize: 30,
-    color: "#9CA3AF",
-  },
-
-  logoutButton: {
-    height: 58,
-    backgroundColor: "#064B78",
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 8,
-    elevation: 3,
-
-    shadowColor: "#064B78",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 5,
+      height: 2,
     },
-    shadowOpacity: 0.22,
-    shadowRadius: 7,
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
 
-  logoutText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "700",
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 18,
   },
+
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#003456",
+  },
+
+  infoRows: {
+    gap: 12,
+  },
+
+  infoRow: {
+    minHeight: 30,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  infoLabel: {
+    color: "#41474F",
+    fontSize: 15,
+    fontWeight: "600",
+    flexShrink: 0,
+  },
+
+  infoValue: {
+    color: "#191C1E",
+    fontSize: 15,
+    fontWeight: "700",
+    flexShrink: 1,
+    marginLeft: 10,
+    textAlign: "right",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(193,199,208,0.2)",
+  },
+
+  // =====================================
+  // SECURITY STATUS
+  // =====================================
+
+  securityStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+    marginLeft: 10,
+  },
+
+  protectedText: {
+    color: "#191C1E",
+    fontSize: 15,
+    fontWeight: "700",
+    includeFontPadding: false,
+  },
+
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#006B5F",
+    marginLeft: 8,
+  },
+
+  biometricStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+    marginLeft: 10,
+  },
+
+  biometricText: {
+    color: "#191C1E",
+    fontSize: 15,
+    fontWeight: "700",
+    includeFontPadding: false,
+  },
+
+  activeBadge: {
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 9,
+    backgroundColor: "#6DF5E1",
+  },
+
+  activeBadgeText: {
+    color: "#006B5F",
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+
+  disabledBadge: {
+    backgroundColor: "#E0E3E5",
+  },
+
+  disabledBadgeText: {
+    color: "#727780",
+  },
+
+  // =====================================
+  // STATISTICS
+  // =====================================
+
+  statisticsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  statBox: {
+    flex: 1,
+    backgroundColor: "#F2F4F6",
+    borderRadius: 9,
+    padding: 16,
+    alignItems: "center",
+  },
+
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#003456",
+  },
+
+  statLabel: {
+    marginTop: 5,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#41474F",
+    letterSpacing: 1,
+  },
+
+  // =====================================
+  // FOOTER
+  // =====================================
+
+  footer: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    alignItems: "center",
+  },
+
+  footerText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#727780",
+    letterSpacing: 2,
+  },
+
+  // =====================================
+  // MODAL
+  // =====================================
 
   modalBackground: {
     flex: 1,
@@ -1015,24 +1535,24 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 28,
+    borderTopLeftRadius: 9,
+    borderTopRightRadius: 9,
+    padding: 26,
     alignItems: "center",
   },
 
   modalTitle: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#111827",
-    marginBottom: 25,
+    color: "#191C1E",
+    marginBottom: 24,
   },
 
   editAvatar: {
     width: 120,
     height: 120,
-    borderRadius: 22,
-    backgroundColor: "#DBEAFE",
+    borderRadius: 9,
+    backgroundColor: "#CFE5FF",
     justifyContent: "center",
     alignItems: "center",
     overflow: "visible",
@@ -1041,11 +1561,8 @@ const styles = StyleSheet.create({
   editAvatarImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 22,
-  },
-
-  editAvatarText: {
-    fontSize: 52,
+    borderRadius: 9,
+    resizeMode: "cover",
   },
 
   cameraBadge: {
@@ -1054,7 +1571,7 @@ const styles = StyleSheet.create({
     bottom: -4,
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 9,
     backgroundColor: "#064B78",
     justifyContent: "center",
     alignItems: "center",
@@ -1071,22 +1588,23 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 55,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 14,
+    borderColor: "#C1C7D0",
+    borderRadius: 9,
     paddingHorizontal: 16,
     fontSize: 16,
-    marginTop: 25,
-    backgroundColor: "#F9FAFB",
+    marginTop: 24,
+    backgroundColor: "#F7F9FB",
+    color: "#191C1E",
   },
 
   saveButton: {
     width: "100%",
     height: 55,
-    borderRadius: 14,
+    borderRadius: 9,
     backgroundColor: "#064B78",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 18,
   },
 
   saveText: {
@@ -1096,7 +1614,7 @@ const styles = StyleSheet.create({
   },
 
   cancelText: {
-    color: "#6B7280",
+    color: "#41474F",
     fontSize: 16,
     fontWeight: "600",
     marginTop: 18,

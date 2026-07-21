@@ -4,21 +4,41 @@
     "slug": "vamsi-vault",
     "scheme": "vamsivault",
     "version": "1.0.0",
+
+    "jsEngine": "hermes",
+
     "icon": "./assets/images/logo.png",
+
     "android": {
       "package": "com.anu2005.vamsivault",
+
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#FFFFFF"
       }
     },
+
     "web": {
       "favicon": "./assets/images/logo.png"
     },
+
     "extra": {
       "eas": {
         "projectId": "8d051adb-3cb8-4305-ada0-0fe2e00fbd00"
       }
-    }
+    },
+
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enableBundleCompression": true
+          }
+        }
+      ]
+    ]
   }
 }
